@@ -5,5 +5,8 @@
   "description": "个人工作台（Blob 同步版）。平台构建时会自动安装下面的依赖。",
   "dependencies": {
     "@edgeone/pages-blob": "latest"
+  },
+  "scripts": {
+    "build": "echo static-build-ok"
   }
 }
