@@ -1,0 +1,19 @@
+{
+  "name": "抓梗的工作台",
+  "short_name": "抓梗",
+  "description": "短视频创作者的日常工作台：AI工具入口、每日技巧、提醒、计划、平台数据、选题灵感",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff7ec",
+  "theme_color": "#16243f",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
