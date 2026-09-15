@@ -619,6 +619,7 @@ const Store = (() => {
     /* ── 敏感数据：独立命名空间，不进备份 ── */
     getSecret(key){ return driver.get(SEC + key); },
     setSecret(key, val){ return driver.set(SEC + key, val); },
+    removeSecret(key){ driver.remove(SEC + key); },
 
     /* ── 旧版数据迁移 ── */
     _stableId(o){
@@ -1189,6 +1190,11 @@ const Sync = {
   },
 
   init(){
+    // 清掉旧版「用户名 + 密码」同步留下的残渣（那套已经废了）
+    if (Store.get('_sync', null) || Store.getSecret('syncPass')) {
+      Store.remove('_sync');
+      Store.removeSecret('syncPass');
+    }
     if (!this.on()) { this.status(''); return; }
     this.pull(false);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) this.pull(false); });
