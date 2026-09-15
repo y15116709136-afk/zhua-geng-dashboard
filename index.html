@@ -169,6 +169,9 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
 .inline-link:active{opacity:.6}
 .tool-meta{font-size:var(--fs-meta);color:var(--text-dim);margin-top:-4px;margin-bottom:14px}
 .tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:20px;background:var(--line);color:var(--text-dim);margin-right:6px}
+.idea-tags{margin-top:4px;line-height:2}
+.idea-ops{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+.idea-ops .inline-link{font-size:12px}
 
 /* ==== 提示条 ==== */
 .banner{
@@ -361,21 +364,40 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
     </section>
     <!-- ==== 功能：平台数据 END ==== -->
 
-    <!-- ==== 功能：选题灵感 START ==== -->
+    <!-- ==== 功能：灵感云库 START ==== -->
     <section class="page" id="page-ideas">
-      <div class="page-title">选题灵感</div>
-      <div class="page-sub">刷到的好点子随手存，拍前翻一翻</div>
+      <div class="page-title">灵感云库</div>
+      <div class="page-sub">每个选题记下对应的视频和脚本，拍前翻一翻</div>
       <div class="card wide">
-        <h2>💡 灵感池</h2>
-        <div class="row" style="margin-bottom:12px">
+        <h2>☁️ 灵感云库
+          <span class="hint" id="ideaState" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span>
+        </h2>
+
+        <div class="row" style="margin-bottom:10px">
           <input type="text" id="ideaInput" placeholder="记一个选题，如：七龙珠名场面二创">
-          <button class="btn" onclick="Ideas.add()">存</button>
+          <button class="btn" id="ideaSaveBtn" onclick="Ideas.add()">存</button>
+          <button class="btn ghost" onclick="Ideas.openForm()">关联文件</button>
         </div>
+
+        <div id="ideaForm" style="display:none;margin-bottom:12px">
+          <p class="hint" style="margin:0 0 8px">
+            只填<b>文件名和文件夹名</b>，不上传原文件（视频太大，云端只同步名字）。<br>
+            填好后，在<b>电脑</b>上点条目下的按钮就能直接打开对应视频 / 脚本 / 素材夹。
+          </p>
+          <input type="text" id="ideaVideo"  placeholder="视频文件名，如：龙珠二创_成片.mp4">
+          <input type="text" id="ideaScript" placeholder="脚本文件名，如：龙珠二创_脚本.docx" style="margin-top:8px">
+          <input type="text" id="ideaFolder" placeholder="素材文件夹名（留空＝跟选题同名）" style="margin-top:8px">
+          <div class="row" style="margin-top:10px">
+            <button class="btn" onclick="Ideas.add()">保存</button>
+            <button class="btn ghost" onclick="Ideas.closeForm()">取消</button>
+          </div>
+        </div>
+
         <p class="hint" id="ideaCloudHint"></p>
         <div id="ideaBody"></div>
       </div>
     </section>
-    <!-- ==== 功能：选题灵感 END ==== -->
+    <!-- ==== 功能：灵感云库 END ==== -->
 
     <!-- ==== 功能：周复盘 START ==== -->
     <section class="page" id="page-recap">
@@ -411,71 +433,55 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
         <p class="hint" id="backupInfo"></p>
       </div>
 
-      <!-- ==== 灵感云库卡片 START ==== -->
+      <!-- ==== 云同步卡片 START ==== -->
       <div class="card wide" id="cloudCard">
-        <h2>☁️ 灵感云库 <span class="hint" id="cloudState" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span></h2>
+        <h2>☁️ 云同步 <span class="hint" id="cloudState" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span></h2>
         <div id="cloudOff">
           <p class="hint" style="margin-top:0">
-            把「选题灵感」存进云端，<b>手机和电脑都能读写</b>（存在你自己的 GitHub 私有片段里，不经过任何第三方服务器）。<br>
-            只同步灵感这一项；密钥<b>只存在这台设备</b>，不进备份、不跟着链接走。<br>
-            <b>手机和电脑填同一个密钥，看到的就是同一份灵感。</b>
+            手机和电脑填<b>同一个密钥</b>，看到的就是同一份数据（灵感、计划、提醒、数据全同步）。<br>
+            存在你自己的 GitHub 私有片段里，不经过任何第三方服务器。<br>
+            <b>填一次就永久记住，之后不用再登录、不用输密码。</b>断网照样能记，联网自动补上。
           </p>
           <div style="margin-top:14px">
             <input type="password" id="cloudToken" placeholder="粘贴 GitHub 密钥（ghp_ 或 github_pat_ 开头）" autocomplete="off">
           </div>
           <div class="row" style="margin-top:14px">
-            <button class="btn" onclick="IdeaCloud.enable()">开启云灵感</button>
-            <button class="btn ghost" onclick="IdeaCloud.showHelp()">密钥怎么弄？</button>
+            <button class="btn" onclick="Sync.enable()">开启云同步</button>
+            <button class="btn ghost" onclick="Sync.showHelp()">密钥怎么弄？</button>
           </div>
         </div>
         <div id="cloudOn" style="display:none">
-          <p class="hint" style="margin-top:0">上次同步：<span id="cloudTime"></span><br>
-            <a class="inline-link" id="cloudLink" href="#" target="_blank" rel="noopener">在 GitHub 上看这份灵感 →</a></p>
-          <div class="row" style="margin-top:14px">
-            <button class="btn" onclick="IdeaCloud.pull(true)">立即同步</button>
-            <button class="btn ghost" onclick="IdeaCloud.disable()">关闭云灵感</button>
-          </div>
-          <p class="hint">改动 4 秒后自动上传；切回页面时自动拉取。<b>断网照样能记</b>，联网后自动补上。</p>
-        </div>
-      </div>
-      <!-- ==== 灵感云库卡片 END ==== -->
-
-      <!-- ==== 双端同步卡片 START ====（用户选双端同步时保留） -->
-      <div class="card wide" id="syncCard">
-        <h2>🔄 双端同步 <span class="hint" id="syncState" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span></h2>
-        <div id="syncOff">
           <p class="hint" style="margin-top:0">
-            开启后手机和电脑登同一个账号，记的东西自动对齐。<br>
-            <b>数据会在你的设备和云端各存一份</b>，本地那份始终在，断网照样能记。<br>
-            云端那份是明文的——只有知道你密码的人能读，但平台运维理论上能看到。<br>
-            <b>密码忘了就进不去了，没有找回功能。</b>
+            ✅ 这台设备已连接，<b>以后打开就是登录状态</b>，不用再填密钥。<br>
+            上次同步：<span id="cloudTime"></span><br>
+            <a class="inline-link" id="cloudLink" href="#" target="_blank" rel="noopener">在 GitHub 上看云端那份 →</a>
           </p>
-          <div style="margin-top:14px">
-            <input type="text" id="syncUser" placeholder="用户名（3-32 个字符，只用来定位你的数据）" autocomplete="username">
-          </div>
-          <div style="margin-top:10px">
-            <input type="password" id="syncPass" placeholder="密码（至少 8 位）" autocomplete="new-password">
-          </div>
-          <div class="row" style="margin-top:14px">
-            <button class="btn" onclick="Settings.enableSync()">开启同步</button>
-            <button class="btn ghost" onclick="Store.exportFile()">先导出备份</button>
-          </div>
-          <p class="hint">建议先导出一份备份再开——万一以后忘了密码，本地这份还在。</p>
-        </div>
-        <div id="syncOn" style="display:none">
-          <p class="hint" style="margin-top:0">账号：<b id="syncWho" class="mono"></b><br>上次同步：<span id="syncTime"></span></p>
           <div class="row" style="margin-top:14px">
             <button class="btn" onclick="Sync.pull(true)">立即同步</button>
-            <button class="btn ghost" onclick="Settings.changePass()">改密码</button>
             <button class="btn ghost" onclick="Sync.disable()">关闭同步</button>
           </div>
           <p class="hint">
-            刚在另一台设备改的东西，这边最多等一分钟才看得到（云端缓存机制），
-            等不及就点「立即同步」。
+            改动 4 秒后自动上传；切回页面自动拉取。新手机只需在这里<b>再粘一次密钥</b>即可。
           </p>
         </div>
       </div>
-      <!-- ==== 双端同步卡片 END ==== -->
+      <!-- ==== 云同步卡片 END ==== -->
+
+      <!-- ==== 本机素材目录卡片 START ==== -->
+      <div class="card" id="mediaCard">
+        <h2>📁 本机素材目录</h2>
+        <p class="hint" style="margin-top:0;margin-bottom:10px">
+          填你放视频和脚本的<b>总文件夹</b>，电脑上一键打开素材就靠它。<br>
+          例：<span class="mono">E:\短视频素材</span>
+        </p>
+        <input type="text" id="mediaRoot" placeholder="E:\短视频素材">
+        <div class="row" style="margin-top:10px">
+          <button class="btn" onclick="Settings.saveMediaRoot()">保存</button>
+          <button class="btn ghost" onclick="Settings.openMediaRoot()">在电脑上打开</button>
+        </div>
+        <p class="hint" id="mediaHint"></p>
+      </div>
+      <!-- ==== 本机素材目录卡片 END ==== -->
 
       <div class="card">
         <h2>⚠️ 危险操作</h2>
@@ -790,7 +796,7 @@ const App = {
     { id:'remind',   icon:'💊', name:'提醒',   onShow: () => Remind.render() },
     { id:'plan',     icon:'✅', name:'计划',   onShow: () => Plan.render()   },
     { id:'platform', icon:'📈', name:'数据',   onShow: () => Platform.render()},
-    { id:'ideas',    icon:'💡', name:'灵感',   onShow: () => Ideas.render()  },
+    { id:'ideas',    icon:'☁️', name:'灵感云库', onShow: () => Ideas.render() },
     { id:'recap',    icon:'📊', name:'复盘',   onShow: () => Recap.render()  },
     { id:'settings', icon:'⚙️', name:'设置',   onShow: () => Settings.render()}
   ],
@@ -817,7 +823,8 @@ const App = {
 
     this.checkBackup();
     if (typeof Sync !== 'undefined') Sync.init();
-    if (typeof IdeaCloud !== 'undefined') IdeaCloud.init();
+    if (typeof Sync !== 'undefined' && !Sync.on()) Sync.status('');
+    Ideas.render();
   },
 
   refresh(){
@@ -849,14 +856,14 @@ const Settings = {
   render(){
     this.refreshBackupInfo();
     this.renderCloud();
-    this.renderSync();
+    this.renderMedia();
   },
 
   renderCloud(){
     const off = document.getElementById('cloudOff');
     const on  = document.getElementById('cloudOn');
-    if (!off || !on || typeof IdeaCloud === 'undefined') return;
-    const enabled = IdeaCloud.on();
+    if (!off || !on || typeof Sync === 'undefined') return;
+    const enabled = Sync.on();
     off.style.display = enabled ? 'none' : 'block';
     on.style.display  = enabled ? 'block' : 'none';
     if (enabled) {
@@ -864,32 +871,31 @@ const Settings = {
       document.getElementById('cloudTime').textContent =
         t ? new Date(t).toLocaleString('zh-CN') : '还没同步过';
       const a = document.getElementById('cloudLink');
-      if (a) a.href = IdeaCloud.cfg().url || '#';
+      if (a) a.href = Sync.cfg().url || '#';
     }
   },
 
-  enableSync(){
-    Sync.enable(document.getElementById('syncUser').value,
-                document.getElementById('syncPass').value);
+  renderMedia(){
+    const el = document.getElementById('mediaRoot');
+    const hint = document.getElementById('mediaHint');
+    if (el) el.value = Store.get('_mediaRoot', '');
+    if (hint) hint.textContent = Store.get('_mediaRoot')
+      ? '已设置。灵感条目填的文件夹名会拼在它下面。'
+      : '没填也能用，只是点「打开素材夹」时会直接打开你填的文件名（可能打不开）。';
   },
 
-  changePass(){
-    const np = prompt('输入新密码（至少 8 位）');
-    if (np) Sync.changePass(np);
+  saveMediaRoot(){
+    const v = (document.getElementById('mediaRoot').value || '').trim().replace(/[/\\]+$/, '');
+    Store.set('_mediaRoot', v);
+    this.renderMedia();
+    Ideas.render();
+    UI.toast(v ? '已保存：' + v : '已清空');
   },
 
-  renderSync(){
-    const card = document.getElementById('syncCard');
-    if (!card || typeof Sync === 'undefined') return;
-    const on = Sync.on();
-    document.getElementById('syncOff').style.display = on ? 'none' : 'block';
-    document.getElementById('syncOn').style.display  = on ? 'block' : 'none';
-    if (on) {
-      document.getElementById('syncWho').textContent = Sync.cfg().user;
-      const t = Store.get('_syncAt');
-      document.getElementById('syncTime').textContent =
-        t ? new Date(t).toLocaleString('zh-CN') : '还没同步过';
-    }
+  openMediaRoot(){
+    const v = Store.get('_mediaRoot', '');
+    if (!v) return UI.toast('先填素材目录');
+    Local.open(v);
   },
 
   refreshBackupInfo(){
@@ -902,137 +908,92 @@ const Settings = {
 };
 
 
-/* ==== 双端同步 START ====
-   三条设计红线：
-   1. 本地优先 —— 写入永远先落 localStorage，界面立刻变。云端是异步的。
-   2. 绝不轮询 —— 只在「打开时 / 切回前台 / 手动刷新」拉取。
-   3. 推送防抖 —— 改动后等 4 秒再推，把连续操作合并成一次请求。 */
-const Sync = {
-  DEBOUNCE: 4000,
-  _timer: null,
-  _busy: false,
+/* ==== 本机文件打开 START ====
+   网页拿不到你的磁盘，也存不下几百 MB 的视频。
+   所以这里的分工是：
+     · 云端（Gist）只同步「选题 + 视频文件名 + 脚本文档名 + 素材文件夹名」
+     · 真要打开视频 / 脚本时，走自定义协议 zhuageng-open://open?path=...
+       交给本机的 launcher.py 去开（只在这台电脑注册过协议时有效） */
+const Local = {
+  isPhone(){ return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || ''); },
 
-  cfg(){ return Store.get('_sync', { on:false, user:'' }); },
-  on(){ return !!this.cfg().on; },
-  pass(){ return Store.getSecret('syncPass') || ''; },
+  root(){ return (Store.get('_mediaRoot', '') || '').replace(/[\\/]+$/, ''); },
 
-  async call(action, extra = {}){
-    const c = this.cfg();
-    const r = await fetch('/api/sync', {
-      method:'POST',
-      headers:{ 'content-type':'application/json' },
-      body: JSON.stringify(Object.assign({ action, user:c.user, pass:this.pass() }, extra))
-    });
-    const j = await r.json().catch(() => ({ error:'返回格式不对' }));
-    if (!r.ok) throw new Error(j.error || ('请求失败 ' + r.status));
-    return j;
+  /** 素材文件夹完整路径：素材目录 + 条目文件夹名（没填就用选题名） */
+  dirOf(it){
+    const root = this.root();
+    if (!root) return '';
+    const name = String(it.folder || it.text || '').trim();
+    return name ? root + '\\' + name : root;
   },
 
-  async enable(user, pass){
-    user = (user || '').trim().toLowerCase();
-    if (user.length < 3) return UI.toast('用户名至少 3 个字符');
-    if ((pass || '').length < 8) return UI.toast('密码至少 8 位');
-    Store.set('_sync', { on:true, user });
-    Store.setSecret('syncPass', pass);
-    try {
-      const j = await this.call('push', { data: Store.dump() });
-      if (j.data) Store.mergeRemote(j.data);
-      Store.set('_syncAt', Date.now());
-      UI.toast(j.created ? '同步已开启' : '已连上，数据已合并');
-      setTimeout(() => location.reload(), 900);
-    } catch(e){
-      Store.set('_sync', { on:false, user:'' });
-      Store.setSecret('syncPass', '');
-      UI.toast(e.message);
-    }
+  /** 视频 / 脚本的完整路径；没填文件名就返回空 */
+  fileOf(it, which){
+    const name = String(which === 'script' ? it.script : it.video || '').trim();
+    if (!name) return '';
+    const dir = this.dirOf(it);
+    return dir ? dir + '\\' + name : name;
   },
 
-  disable(){
-    if (!confirm('关闭同步？本地数据一条不会少，只是不再和云端对齐。')) return;
-    Store.set('_sync', { on:false, user:'' });
-    Store.setSecret('syncPass', '');
-    UI.toast('已关闭同步');
-    Settings.render();
+  open(path){
+    if (!path) { UI.toast('还没填名字，先点「关联文件」'); return; }
+    if (this.isPhone()) { UI.toast('手机上打不开本机文件，去电脑端点'); return; }
+    window.location.href = 'zhuageng-open://open?path=' + encodeURIComponent(path);
+    UI.toast('已让电脑打开：' + String(path).split('\\').pop());
   },
 
-  async changePass(np){
-    if ((np || '').length < 8) return UI.toast('新密码至少 8 位');
-    try {
-      await this.call('chpass', { newPass: np });
-      Store.setSecret('syncPass', np);
-      UI.toast('密码已改');
-    } catch(e){ UI.toast(e.message); }
+  copy(text){
+    if (!text) return UI.toast('没有可复制的内容');
+    const done = () => UI.toast('已复制：' + text);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, () => this._copyFallback(text, done));
+    } else this._copyFallback(text, done);
   },
 
-  async pull(loud){
-    if (!this.on() || this._busy) return;
-    this._busy = true;
-    this.status('同步中');
-    try {
-      const j = await this.call('pull');
-      const n = Store.mergeRemote(j.data || {});
-      Store.set('_syncAt', Date.now());
-      this.status('已同步');
-      if (n) { if (loud) UI.toast('拉到 ' + n + ' 处更新'); App.refresh(); }
-      else if (loud) UI.toast('已是最新');
-    } catch(e){
-      this.status('未同步');
-      if (loud) UI.toast(e.message.includes('NO_ACCOUNT') ? '云端还没有数据' : e.message);
-    } finally { this._busy = false; }
-  },
-
-  schedule(){
-    if (!this.on()) return;
-    clearTimeout(this._timer);
-    this._timer = setTimeout(() => this.push(), this.DEBOUNCE);
-  },
-
-  async push(){
-    if (!this.on() || this._busy) return;
-    this._busy = true;
-    this.status('同步中');
-    try {
-      const j = await this.call('push', { data: Store.dump() });
-      if (j.data) Store.mergeRemote(j.data);
-      Store.set('_syncAt', Date.now());
-      this.status('已同步');
-    } catch(e){
-      this.status('未同步');
-      console.warn('同步失败，本地数据不受影响：', e.message);
-    } finally { this._busy = false; }
-  },
-
-  status(t){
-    const el = document.getElementById('syncState');
-    if (el) el.textContent = t;
-  },
-
-  init(){
-    if (!this.on()) return;
-    this.pull();
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) this.pull();
-    });
-    window.addEventListener('online', () => this.push());
+  _copyFallback(text, done){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); }
+    catch { UI.toast('复制失败，长按选中文字手动复制'); }
+    document.body.removeChild(ta);
   }
 };
-/* ==== 双端同步 END ==== */
+/* ==== 本机文件打开 END ==== */
 
 
-/* ==== 功能：灵感云库 START ====
-   把「选题灵感」这一个列表存到 GitHub 私有 Gist，手机 / 电脑都能读写。
-   三条红线跟主同步一致：本地优先、绝不轮询、推送防抖。
-   密钥走 Store 的 secret 命名空间 —— 不进备份、不进 dump。 */
-const IdeaCloud = {
-  API:   'https://api.github.com',
-  FILE:  'ideas.json',
-  MARK:  'zhuageng-ideas-v1',     // 靠这个标记在多台设备间认出同一个 Gist
+/* ==== 云同步 START ====
+   后端：你自己的 GitHub 私有 Gist（一个 JSON 文件），不经过任何第三方服务器。
+
+   为什么不再用账号密码：
+     账号密码那套要服务器（/api/sync）来存账号、验密码。GitHub Pages 是纯静态的，
+     没有后端，请求 /api/sync 只会拿到一个 HTML 页面，解析失败就报「返回格式不对」。
+     所以改成密钥（token）直连 Gist：不需要任何服务器，静态页面也能用。
+     密钥存在这台设备的浏览器里 —— 填一次就一直在，不用重复登录。
+
+   三条红线（跟之前一致）：
+     1. 本地优先 —— 写入永远先落 localStorage，界面立刻变，云端是异步的。
+     2. 绝不轮询 —— 只在「打开时 / 切回前台 / 手动点同步」时拉取。
+     3. 单文件必须先合并再上传 —— Gist 只有一个文件，直接覆盖会吞掉另一台设备的改动。
+        所以每次写之前都先读一遍合并，宁可多一次请求，不能丢数据。 */
+const Sync = {
+  API:    'https://api.github.com',
+  FILE:   'data.json',
+  FILE0:  'ideas.json',            // 旧版文件名（只有灵感那一个列表）
+  MARK:   'zhuageng-sync-v1',      // 靠这个标记在多台设备间认出同一个 Gist
+  MARK0:  'zhuageng-ideas-v1',
+  DESC:   '抓梗的工作台 · 云同步 zhuageng-sync-v1',
   DEBOUNCE: 4000,
   _timer: null,
   _busy:  false,
 
-  cfg(){ return Store.get('_ideacloud', { on:false, id:'', url:'' }); },
-  on(){  return !!this.cfg().on; },
+  cfg(){
+    return Store.get('_cloud', null) || Store.get('_ideacloud', null) || { on:false, id:'', url:'' };
+  },
+  on(){  return !!this.cfg().on && !!this.token(); },
   token(){ return Store.getSecret('gistToken') || ''; },
 
   async api(path, opts = {}){
@@ -1057,10 +1018,11 @@ const IdeaCloud = {
 
   payload(){
     return {
-      v: 1,
-      app: '抓梗的工作台 · 灵感库',
+      v: 2,
+      app: '抓梗的工作台',
+      device: navigator.userAgent.slice(0, 60),
       updatedAt: new Date().toISOString(),
-      items: Store.get('ideas', [])     // 含墓碑，删除也能同步过去
+      data: Store.dump()          // 含墓碑，删除也能同步过去
     };
   },
 
@@ -1069,15 +1031,33 @@ const IdeaCloud = {
     const c = this.cfg();
     if (c.id) return c.id;
     const all = await this.api('/gists?per_page=100');
-    const hit = (all || []).find(g => g.description && g.description.indexOf(this.MARK) >= 0);
+    const list = all || [];
+    let hit = list.find(g => g.description && g.description.indexOf(this.MARK) >= 0);
     if (hit) { this._save(hit); return hit.id; }
+
+    // 旧版「灵感云库」的 Gist：直接升级成全量同步库，里面的灵感一条不丢
+    const old = list.find(g => g.description && g.description.indexOf(this.MARK0) >= 0);
+    if (old) {
+      try {
+        const data = await this._readGist(old);
+        if (data) Store.mergeRemote(data);
+      } catch (e) { console.warn('旧灵感读取失败，跳过：', e.message); }
+      await this.api('/gists/' + old.id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: this.DESC })
+      });
+      this._save(old);
+      return old.id;
+    }
+
     const created = await this.api('/gists', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        description: '抓梗的工作台 · 灵感库 ' + this.MARK,
+        description: this.DESC,
         public: false,
-        files: { [this.FILE]: { content: JSON.stringify(this.payload(), null, 2) } }
+        files: { [this.FILE]: { content: JSON.stringify(this.payload()) } }
       })
     });
     this._save(created);
@@ -1085,101 +1065,112 @@ const IdeaCloud = {
   },
 
   _save(g){
-    Store.set('_ideacloud', { on:true, id: g.id, url: g.html_url || '' });
+    Store.set('_cloud', { on:true, id: g.id, url: g.html_url || '' });
+    Store.remove('_ideacloud');
+  },
+
+  _text(f){
+    let p = Promise.resolve(f.content || '');
+    if (f.truncated && f.raw_url) {
+      p = fetch(f.raw_url).then(r => r.ok ? r.text() : (f.content || ''));
+    }
+    return p;
+  },
+
+  async _readGist(g){
+    const files = g.files || {};
+    let f = files[this.FILE];
+    if (!f) {
+      const f0 = files[this.FILE0];           // 旧版：只有灵感
+      if (!f0) return null;
+      let obj = null;
+      try { obj = JSON.parse(await this._text(f0)); } catch { obj = null; }
+      const items = (obj && Array.isArray(obj.items)) ? obj.items : null;
+      return items ? { ideas: items } : null;
+    }
+    let obj = null;
+    try { obj = JSON.parse(await this._text(f)); } catch { obj = null; }
+    return (obj && obj.data) ? obj.data : null;
+  },
+
+  async read(){
+    const id = await this.ensure();
+    const g = await this.api('/gists/' + id);
+    return this._readGist(g);
+  },
+
+  async write(){
+    const id = await this.ensure();
+    await this.api('/gists/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: { [this.FILE]: { content: JSON.stringify(this.payload()) } } })
+    });
   },
 
   async enable(){
     const t = (document.getElementById('cloudToken').value || '').trim();
     if (!/^(ghp_|github_pat_)/.test(t)) return UI.toast('密钥格式不对，应以 ghp_ 或 github_pat_ 开头');
-    Store.setSecret('gistToken', t);
-    Store.set('_ideacloud', { on:true, id:'', url:'' });
+    Store.setSecret('gistToken', t);          // 先存下来：就算这次网络失败也不用重填
+    Store.set('_cloud', { on:true, id:'', url:'' });
     Settings.renderCloud();
     this.status('连接中');
     try {
       await this.ensure();
       await this.pull(false);
-      await this.push();
-      UI.toast('云灵感已开启，手机填同一个密钥就能看到');
+      UI.toast('云同步已开启 —— 这台设备以后自动登录');
     } catch (e) {
-      Store.setSecret('gistToken', '');
-      Store.set('_ideacloud', { on:false, id:'', url:'' });
-      UI.toast(e.message);
+      UI.toast(e.message || '连不上，检查密钥或网络');
     }
     Settings.renderCloud();
-    Ideas.render();
+    App.refresh();
   },
 
   disable(){
-    if (!confirm('关闭云灵感？本地这些灵感一条都不会少，只是不再和云端对齐。')) return;
+    if (!confirm('关闭云同步？本地数据一条不会少，只是不再和云端对齐。\n（密钥也会从这台设备删掉，下次要重新填）')) return;
     Store.setSecret('gistToken', '');
-    Store.set('_ideacloud', { on:false, id:'', url:'' });
+    Store.set('_cloud', { on:false, id:'', url:'' });
+    Store.remove('_ideacloud');
     this.status('');
     Settings.renderCloud();
     Ideas.render();
-    UI.toast('已关闭云灵感');
+    UI.toast('已关闭云同步');
   },
 
+  /** 拉 + 合并 + 回传。单文件存储，所以读和写必须一起做，否则会覆盖另一台设备的改动 */
   async pull(loud){
     if (!this.on() || this._busy) return;
     this._busy = true;
     this.status('同步中');
     try {
-      const id = await this.ensure();
-      const before = Store.list('ideas').length;
-      const g = await this.api('/gists/' + id);
-      const f = (g.files || {})[this.FILE];
-      if (f && f.content) {
-        let text = f.content;
-        // 内容过长时 API 会截断，改从 raw_url 取全文（几千条灵感才会碰到）
-        if (f.truncated && f.raw_url) {
-          const rr = await fetch(f.raw_url);
-          if (rr.ok) text = await rr.text();
-        }
-        let remote = null;
-        try { remote = JSON.parse(text); } catch { remote = null; }
-        const items = (remote && Array.isArray(remote.items)) ? remote.items : [];
-        Store.mergeRemote({ ideas: items });
-      }
+      const remote = await this.read();
+      const n = remote ? Store.mergeRemote(remote) : 0;
       Store.set('_cloudAt', Date.now());
+      await this.write();
       this.status('已同步');
-      const delta = Store.list('ideas').length - before;
-      if (loud) UI.toast(delta ? ('拉到 ' + delta + ' 条新灵感') : '已是最新');
-      if (delta) { Ideas.render(); Settings.renderCloud(); }
+      if (loud) UI.toast(n ? ('拉到 ' + n + ' 处更新') : '已是最新');
+      if (n) App.refresh();
     } catch (e) {
-      this.status('未同步');
-      if (loud) UI.toast(e.message);
-      else console.warn('云灵感拉取失败，本地不受影响：', e.message);
+      const dead = /密钥/.test(e.message || '');
+      this.status(dead ? '密钥失效' : '未同步');
+      if (loud || dead) UI.toast(dead ? (e.message + '（到设置里重填一次就行）') : e.message);
+      else console.warn('云同步失败，本地数据不受影响：', e.message);
     } finally { this._busy = false; }
   },
+
+  push(){ return this.pull(false); },
 
   schedule(){
     if (!this.on()) return;
     clearTimeout(this._timer);
-    this._timer = setTimeout(() => this.push(), this.DEBOUNCE);
-  },
-
-  async push(){
-    if (!this.on() || this._busy) return;
-    this._busy = true;
-    this.status('同步中');
-    try {
-      const id = await this.ensure();
-      await this.api('/gists/' + id, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: { [this.FILE]: { content: JSON.stringify(this.payload(), null, 2) } } })
-      });
-      Store.set('_cloudAt', Date.now());
-      this.status('已同步');
-    } catch (e) {
-      this.status('未同步');
-      console.warn('云灵感上传失败，本地不受影响：', e.message);
-    } finally { this._busy = false; }
+    this._timer = setTimeout(() => this.pull(false), this.DEBOUNCE);
   },
 
   status(t){
-    const el = document.getElementById('cloudState');
-    if (el) el.textContent = t || '';
+    const a = document.getElementById('cloudState');
+    const b = document.getElementById('ideaState');
+    if (a) a.textContent = t || '';
+    if (b) b.textContent = t ? ('☁️ ' + t) : (this.on() ? '☁️ 已连云端' : '');
   },
 
   showHelp(){
@@ -1190,21 +1181,21 @@ const IdeaCloud = {
         2. 名字那一栏已经填好了，往下拉，确认 <b>gist</b> 那一项是勾上的<br>
         3. 点最下面绿色 <b>Generate token</b><br>
         4. 复制 <code>ghp_</code> 开头那一串，粘回上面的框里<br>
-        <span style="opacity:.7">这个密钥只能读写你自己的 Gist，碰不到代码仓库。用完后可以随时去 GitHub 删掉。</span>
+        <span style="opacity:.7">这个密钥只能读写你自己的 Gist，碰不到代码仓库。手机上再粘一次同一串，两台就通了。</span>
       </span>
-      <button onclick="window.open('https://github.com/settings/tokens/new?scopes=gist&amp;description=zhua-geng-ideas','_blank')">去生成</button>
+      <button onclick="window.open('https://github.com/settings/tokens/new?scopes=gist&amp;description=zhua-geng-sync','_blank')">去生成</button>
     `, 'page-settings');
     box.dataset.help = '1';
   },
 
   init(){
-    if (!this.on()) return;
+    if (!this.on()) { this.status(''); return; }
     this.pull(false);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) this.pull(false); });
-    window.addEventListener('online', () => this.push());
+    window.addEventListener('online', () => this.pull(false));
   }
 };
-/* ==== 功能：灵感云库 END ==== */
+/* ==== 云同步 END ==== */
 
 
 /* ==== 功能：我的AI工具 START ==== */
@@ -1445,46 +1436,143 @@ const Platform = {
 /* ==== 功能：平台数据 END ==== */
 
 
-/* ==== 功能：选题灵感 START ==== */
+/* ==== 功能：灵感云库 START ====
+   一条灵感 = 一个选题 + 它的视频文件名 + 脚本文档名 + 素材文件夹名。
+   原文件（几百 MB 的视频）不进云端，只同步名字；在电脑上点按钮直接打开。 */
 const Ideas = {
   KEY: 'ideas',
+  _edit: null,
+
   render(){
     const el = document.getElementById('ideaBody');
-    const h = document.getElementById('ideaCloudHint');
-    if (h) h.textContent = (typeof IdeaCloud !== 'undefined' && IdeaCloud.on())
-      ? '☁️ 已开启云灵感 —— 这条存完会自动上传，手机上也能看到'
-      : '☁️ 现在只存在这台设备。到 ⚙️ 设置里开「云灵感」，手机也能读写';
+    const h  = document.getElementById('ideaCloudHint');
+    if (h) h.textContent = (typeof Sync !== 'undefined' && Sync.on())
+      ? '☁️ 已连云端 —— 存完自动上传，手机和电脑都能看'
+      : '☁️ 现在只存在这台设备。到 ⚙️ 设置里开「云同步」，手机也能读写';
     if (!el) return;
+
     const items = Store.list(this.KEY, (a,b) => (b._u||0)-(a._u||0));
-    if (!items.length){ el.innerHTML = '<div class="empty">灵感池空着，刷到好点子就存进来</div>'; return; }
-    el.innerHTML = items.map(x => `
+    if (!items.length){
+      el.innerHTML = '<div class="empty">还空着。刷到好点子就存一条，回头再补上视频和脚本名</div>';
+      return;
+    }
+
+    el.innerHTML = items.map(x => {
+      const tags = [];
+      if (x.video)  tags.push('<span class="tag">🎬 ' + Util.esc(x.video) + '</span>');
+      if (x.script) tags.push('<span class="tag">📝 ' + Util.esc(x.script) + '</span>');
+      if (x.folder) tags.push('<span class="tag">📂 ' + Util.esc(x.folder) + '</span>');
+
+      const ops = [];
+      ops.push('<a class="inline-link" onclick="Ideas.edit(\'' + x.id + '\')">✎ 编辑</a>');
+      if (!Local.isPhone()){
+        ops.push('<a class="inline-link" onclick="Ideas.openDir(\'' + x.id + '\')">📂 素材夹</a>');
+        if (x.video)  ops.push('<a class="inline-link" onclick="Ideas.openFile(\'' + x.id + '\',\'video\')">🎬 开视频</a>');
+        if (x.script) ops.push('<a class="inline-link" onclick="Ideas.openFile(\'' + x.id + '\',\'script\')">📝 开脚本</a>');
+      } else {
+        ops.push('<a class="inline-link" onclick="Ideas.copyName(\'' + x.id + '\')">📋 复制文件名</a>');
+      }
+
+      return `
       <div class="item ${x.done?'done':''}">
         <span class="box" onclick="Ideas.toggle('${x.id}')">${x.done?'✓':''}</span>
-        <span class="grow" onclick="Ideas.toggle('${x.id}')">${Util.esc(x.text)}</span>
+        <span class="grow">
+          <div onclick="Ideas.toggle('${x.id}')">${Util.esc(x.text)}</div>
+          ${tags.length ? '<div class="idea-tags">' + tags.join('') + '</div>' : ''}
+          <div class="idea-ops">${ops.join('')}</div>
+        </span>
         <button class="del" onclick="Ideas.del('${x.id}')">✕</button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   },
-  cloud(){ if (typeof IdeaCloud !== 'undefined') IdeaCloud.schedule(); },
+
+  /* ── 关联文件表单 ── */
+  openForm(){
+    this._edit = null;
+    document.getElementById('ideaForm').style.display = 'block';
+    document.getElementById('ideaSaveBtn').textContent = '存';
+    document.getElementById('ideaInput').focus();
+  },
+  closeForm(){
+    this._edit = null;
+    ['ideaVideo','ideaScript','ideaFolder'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('ideaForm').style.display = 'none';
+    document.getElementById('ideaSaveBtn').textContent = '存';
+  },
+  edit(id){
+    const it = Store.list(this.KEY).find(x => x.id === id);
+    if (!it) return;
+    this._edit = id;
+    document.getElementById('ideaInput').value  = it.text || '';
+    document.getElementById('ideaVideo').value  = it.video || '';
+    document.getElementById('ideaScript').value = it.script || '';
+    document.getElementById('ideaFolder').value = it.folder || '';
+    document.getElementById('ideaForm').style.display = 'block';
+    document.getElementById('ideaSaveBtn').textContent = '保存修改';
+    document.getElementById('ideaInput').focus();
+  },
+
   add(){
     const el = document.getElementById('ideaInput');
     const text = el.value.trim();
-    if (!text) return;
-    Store.upsert(this.KEY, { id: Util.uid(), text, done:false });
+    if (!text) return UI.toast('先写个选题');
+
+    const patch = {
+      text,
+      video:  (document.getElementById('ideaVideo').value  || '').trim(),
+      script: (document.getElementById('ideaScript').value || '').trim(),
+      folder: (document.getElementById('ideaFolder').value || '').trim()
+    };
+
+    if (this._edit) {
+      const old = Store.list(this.KEY).find(x => x.id === this._edit) || {};
+      Store.upsert(this.KEY, Object.assign({ id: this._edit, done: old.done || false }, patch));
+      UI.toast('已保存');
+    } else {
+      Store.upsert(this.KEY, Object.assign({ id: Util.uid(), done: false }, patch));
+    }
+
     el.value = '';
-    this.cloud();
+    this.closeForm();
     this.render();
   },
+
   toggle(id){
     const it = Store.list(this.KEY).find(x => x.id === id);
     if (!it) return;
     Store.upsert(this.KEY, { id, text: it.text, done: !it.done });
-    if (typeof Sync !== 'undefined' && Sync.on()) Sync.schedule();
-    this.cloud();
     this.render();
   },
-  del(id){ Store.softDelete(this.KEY, id); if (typeof Sync !== 'undefined' && Sync.on()) Sync.schedule(); this.cloud(); this.render(); }
+
+  del(id){
+    const it = Store.list(this.KEY).find(x => x.id === id);
+    if (!confirm('删掉这条灵感？' + (it ? '（' + it.text + '）' : ''))) return;
+    Store.softDelete(this.KEY, id);
+    this.render();
+  },
+
+  /* ── 打开本机文件 ── */
+  _get(id){ return Store.list(this.KEY).find(x => x.id === id) || {}; },
+
+  openDir(id){
+    const p = Local.dirOf(this._get(id));
+    if (!p) return UI.toast('先到 ⚙️ 设置里填「本机素材目录」');
+    Local.open(p);
+  },
+  openFile(id, which){
+    const it = this._get(id);
+    const p = Local.fileOf(it, which);
+    if (!p) return UI.toast(which === 'script' ? '这条还没填脚本名' : '这条还没填视频名');
+    Local.open(p);
+  },
+  copyName(id){
+    const it = this._get(id);
+    const s = [it.video, it.script, it.folder].filter(Boolean).join('\n');
+    if (!s) return UI.toast('这条还没关联文件');
+    Local.copy(s);
+  }
 };
-/* ==== 功能：选题灵感 END ==== */
+/* ==== 功能：灵感云库 END ==== */
 
 
 /* ==== 功能：周复盘 START ====

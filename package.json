@@ -2,10 +2,7 @@
   "name": "personal-dashboard",
   "private": true,
   "version": "1.0.0",
-  "description": "个人工作台（Blob 同步版）。平台构建时会自动安装下面的依赖。",
-  "dependencies": {
-    "@edgeone/pages-blob": "latest"
-  },
+  "description": "个人工作台（静态版，云同步走 GitHub Gist，不需要后端）。",
   "scripts": {
     "build": "echo static-build-ok"
   }
