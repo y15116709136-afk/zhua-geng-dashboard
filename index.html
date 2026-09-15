@@ -273,11 +273,23 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
     <!-- ==== 功能：我的AI工具 START ==== -->
     <section class="page" id="page-tools">
       <div class="page-title">我的 AI 工具</div>
-      <div class="page-sub">点一下，本地服务自动拉起来</div>
-      <div class="card wide">
-        <h2>🛠️ 本地服务入口（这台电脑专属）</h2>
+      <div class="page-sub">点一下，本机工具自动拉起来</div>
 
-        <a class="tool-link" href="zhuageng-open:course">▶ 启动 · 网课视频转文字</a>
+      <div class="card wide">
+        <h2>💻 常用软件</h2>
+
+        <a class="tool-link" href="zhuageng-open:cat">▶ 启动 · 哼哼猫</a>
+        <p class="tool-meta">E:\MeowLoad\MeowLoad.exe<br>
+          已经在跑就不会重复开第二个；窗口被别的窗口挡住时，从任务栏切过去。</p>
+
+        <a class="tool-link" href="zhuageng-open:cut">▶ 启动 · 剪映专业版</a>
+        <p class="tool-meta">F:\JianyingPro\JianyingPro.exe（带 <code>--src1</code> 参数，跟桌面快捷方式一致）</p>
+      </div>
+
+      <div class="card wide">
+        <h2>🛠️ 本地服务（这台电脑专属）</h2>
+
+        <a class="tool-link" href="zhuageng-open:course">▶ 启动 · 课程提取器</a>
         <p class="tool-meta">把课程视频转成文字稿 / 结构化笔记，完全离线，视频不上传。<br>
           已经在后台跑着？<a class="inline-link" href="http://127.0.0.1:8765" target="_blank" rel="noopener">直接打开 8765 →</a></p>
 
@@ -286,8 +298,8 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
           已经在后台跑着？<a class="inline-link" href="http://127.0.0.1:8756" target="_blank" rel="noopener">直接打开 8756 →</a></p>
 
         <p class="hint">点「启动」会先把服务拉起来再打开浏览器；<b>第一次点浏览器会弹一个确认框</b>，勾上「始终允许打开这类链接」以后就不再问了。<br>
-          没反应说明这台设备还没装启动通道（见手册），那时用下面的小链接，但要先手动双击桌面对应的 .bat。<br>
-          <span style="color:var(--text-dim)">这两个工具只跑在本机 <code>127.0.0.1</code> 上，手机上用不了——这是它们的运行方式决定的，跟工作台没关系。</span></p>
+          完全没反应 = 这台设备还没装启动通道（见手册），那时只能手动双击桌面对应的 .bat。<br>
+          <span style="color:var(--text-dim)">本地服务只跑在本机 <code>127.0.0.1</code> 上，手机上用不了——这是它们的运行方式决定的，跟工作台没关系。</span></p>
       </div>
     </section>
     <!-- ==== 功能：我的AI工具 END ==== -->
