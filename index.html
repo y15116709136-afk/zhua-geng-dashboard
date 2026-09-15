@@ -371,6 +371,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
           <input type="text" id="ideaInput" placeholder="记一个选题，如：七龙珠名场面二创">
           <button class="btn" onclick="Ideas.add()">存</button>
         </div>
+        <p class="hint" id="ideaCloudHint"></p>
         <div id="ideaBody"></div>
       </div>
     </section>
@@ -409,6 +410,35 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="Store.importFile(this)">
         <p class="hint" id="backupInfo"></p>
       </div>
+
+      <!-- ==== 灵感云库卡片 START ==== -->
+      <div class="card wide" id="cloudCard">
+        <h2>☁️ 灵感云库 <span class="hint" id="cloudState" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span></h2>
+        <div id="cloudOff">
+          <p class="hint" style="margin-top:0">
+            把「选题灵感」存进云端，<b>手机和电脑都能读写</b>（存在你自己的 GitHub 私有片段里，不经过任何第三方服务器）。<br>
+            只同步灵感这一项；密钥<b>只存在这台设备</b>，不进备份、不跟着链接走。<br>
+            <b>手机和电脑填同一个密钥，看到的就是同一份灵感。</b>
+          </p>
+          <div style="margin-top:14px">
+            <input type="password" id="cloudToken" placeholder="粘贴 GitHub 密钥（ghp_ 或 github_pat_ 开头）" autocomplete="off">
+          </div>
+          <div class="row" style="margin-top:14px">
+            <button class="btn" onclick="IdeaCloud.enable()">开启云灵感</button>
+            <button class="btn ghost" onclick="IdeaCloud.showHelp()">密钥怎么弄？</button>
+          </div>
+        </div>
+        <div id="cloudOn" style="display:none">
+          <p class="hint" style="margin-top:0">上次同步：<span id="cloudTime"></span><br>
+            <a class="inline-link" id="cloudLink" href="#" target="_blank" rel="noopener">在 GitHub 上看这份灵感 →</a></p>
+          <div class="row" style="margin-top:14px">
+            <button class="btn" onclick="IdeaCloud.pull(true)">立即同步</button>
+            <button class="btn ghost" onclick="IdeaCloud.disable()">关闭云灵感</button>
+          </div>
+          <p class="hint">改动 4 秒后自动上传；切回页面时自动拉取。<b>断网照样能记</b>，联网后自动补上。</p>
+        </div>
+      </div>
+      <!-- ==== 灵感云库卡片 END ==== -->
 
       <!-- ==== 双端同步卡片 START ====（用户选双端同步时保留） -->
       <div class="card wide" id="syncCard">
@@ -787,6 +817,7 @@ const App = {
 
     this.checkBackup();
     if (typeof Sync !== 'undefined') Sync.init();
+    if (typeof IdeaCloud !== 'undefined') IdeaCloud.init();
   },
 
   refresh(){
@@ -817,7 +848,24 @@ const Settings = {
 
   render(){
     this.refreshBackupInfo();
+    this.renderCloud();
     this.renderSync();
+  },
+
+  renderCloud(){
+    const off = document.getElementById('cloudOff');
+    const on  = document.getElementById('cloudOn');
+    if (!off || !on || typeof IdeaCloud === 'undefined') return;
+    const enabled = IdeaCloud.on();
+    off.style.display = enabled ? 'none' : 'block';
+    on.style.display  = enabled ? 'block' : 'none';
+    if (enabled) {
+      const t = Store.get('_cloudAt');
+      document.getElementById('cloudTime').textContent =
+        t ? new Date(t).toLocaleString('zh-CN') : '还没同步过';
+      const a = document.getElementById('cloudLink');
+      if (a) a.href = IdeaCloud.cfg().url || '#';
+    }
   },
 
   enableSync(){
@@ -969,6 +1017,194 @@ const Sync = {
   }
 };
 /* ==== 双端同步 END ==== */
+
+
+/* ==== 功能：灵感云库 START ====
+   把「选题灵感」这一个列表存到 GitHub 私有 Gist，手机 / 电脑都能读写。
+   三条红线跟主同步一致：本地优先、绝不轮询、推送防抖。
+   密钥走 Store 的 secret 命名空间 —— 不进备份、不进 dump。 */
+const IdeaCloud = {
+  API:   'https://api.github.com',
+  FILE:  'ideas.json',
+  MARK:  'zhuageng-ideas-v1',     // 靠这个标记在多台设备间认出同一个 Gist
+  DEBOUNCE: 4000,
+  _timer: null,
+  _busy:  false,
+
+  cfg(){ return Store.get('_ideacloud', { on:false, id:'', url:'' }); },
+  on(){  return !!this.cfg().on; },
+  token(){ return Store.getSecret('gistToken') || ''; },
+
+  async api(path, opts = {}){
+    const headers = Object.assign({
+      'Authorization': 'Bearer ' + this.token(),
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    }, opts.headers || {});
+    const r = await fetch(this.API + path, Object.assign({}, opts, { headers }));
+    if (r.status === 401) throw new Error('密钥无效或已过期，请重新生成一个');
+    if (r.status === 403) {
+      const j = await r.json().catch(() => ({}));
+      if (String(j.message || '').includes('rate limit')) throw new Error('操作太频繁，等一分钟再试');
+      throw new Error('密钥权限不够，生成时请勾选 gist（403）');
+    }
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.message || ('请求失败 ' + r.status));
+    }
+    return r.status === 204 ? null : r.json();
+  },
+
+  payload(){
+    return {
+      v: 1,
+      app: '抓梗的工作台 · 灵感库',
+      updatedAt: new Date().toISOString(),
+      items: Store.get('ideas', [])     // 含墓碑，删除也能同步过去
+    };
+  },
+
+  /** 找到属于这个工作台的 Gist；没有就建一个（私有） */
+  async ensure(){
+    const c = this.cfg();
+    if (c.id) return c.id;
+    const all = await this.api('/gists?per_page=100');
+    const hit = (all || []).find(g => g.description && g.description.indexOf(this.MARK) >= 0);
+    if (hit) { this._save(hit); return hit.id; }
+    const created = await this.api('/gists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        description: '抓梗的工作台 · 灵感库 ' + this.MARK,
+        public: false,
+        files: { [this.FILE]: { content: JSON.stringify(this.payload(), null, 2) } }
+      })
+    });
+    this._save(created);
+    return created.id;
+  },
+
+  _save(g){
+    Store.set('_ideacloud', { on:true, id: g.id, url: g.html_url || '' });
+  },
+
+  async enable(){
+    const t = (document.getElementById('cloudToken').value || '').trim();
+    if (!/^(ghp_|github_pat_)/.test(t)) return UI.toast('密钥格式不对，应以 ghp_ 或 github_pat_ 开头');
+    Store.setSecret('gistToken', t);
+    Store.set('_ideacloud', { on:true, id:'', url:'' });
+    Settings.renderCloud();
+    this.status('连接中');
+    try {
+      await this.ensure();
+      await this.pull(false);
+      await this.push();
+      UI.toast('云灵感已开启，手机填同一个密钥就能看到');
+    } catch (e) {
+      Store.setSecret('gistToken', '');
+      Store.set('_ideacloud', { on:false, id:'', url:'' });
+      UI.toast(e.message);
+    }
+    Settings.renderCloud();
+    Ideas.render();
+  },
+
+  disable(){
+    if (!confirm('关闭云灵感？本地这些灵感一条都不会少，只是不再和云端对齐。')) return;
+    Store.setSecret('gistToken', '');
+    Store.set('_ideacloud', { on:false, id:'', url:'' });
+    this.status('');
+    Settings.renderCloud();
+    Ideas.render();
+    UI.toast('已关闭云灵感');
+  },
+
+  async pull(loud){
+    if (!this.on() || this._busy) return;
+    this._busy = true;
+    this.status('同步中');
+    try {
+      const id = await this.ensure();
+      const before = Store.list('ideas').length;
+      const g = await this.api('/gists/' + id);
+      const f = (g.files || {})[this.FILE];
+      if (f && f.content) {
+        let text = f.content;
+        // 内容过长时 API 会截断，改从 raw_url 取全文（几千条灵感才会碰到）
+        if (f.truncated && f.raw_url) {
+          const rr = await fetch(f.raw_url);
+          if (rr.ok) text = await rr.text();
+        }
+        let remote = null;
+        try { remote = JSON.parse(text); } catch { remote = null; }
+        const items = (remote && Array.isArray(remote.items)) ? remote.items : [];
+        Store.mergeRemote({ ideas: items });
+      }
+      Store.set('_cloudAt', Date.now());
+      this.status('已同步');
+      const delta = Store.list('ideas').length - before;
+      if (loud) UI.toast(delta ? ('拉到 ' + delta + ' 条新灵感') : '已是最新');
+      if (delta) { Ideas.render(); Settings.renderCloud(); }
+    } catch (e) {
+      this.status('未同步');
+      if (loud) UI.toast(e.message);
+      else console.warn('云灵感拉取失败，本地不受影响：', e.message);
+    } finally { this._busy = false; }
+  },
+
+  schedule(){
+    if (!this.on()) return;
+    clearTimeout(this._timer);
+    this._timer = setTimeout(() => this.push(), this.DEBOUNCE);
+  },
+
+  async push(){
+    if (!this.on() || this._busy) return;
+    this._busy = true;
+    this.status('同步中');
+    try {
+      const id = await this.ensure();
+      await this.api('/gists/' + id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: { [this.FILE]: { content: JSON.stringify(this.payload(), null, 2) } } })
+      });
+      Store.set('_cloudAt', Date.now());
+      this.status('已同步');
+    } catch (e) {
+      this.status('未同步');
+      console.warn('云灵感上传失败，本地不受影响：', e.message);
+    } finally { this._busy = false; }
+  },
+
+  status(t){
+    const el = document.getElementById('cloudState');
+    if (el) el.textContent = t || '';
+  },
+
+  showHelp(){
+    const box = UI.banner(`
+      <span>
+        <b>生成密钥（1 分钟，只做一次）</b><br>
+        1. 点右边按钮打开 GitHub（没登录先登录）<br>
+        2. 名字那一栏已经填好了，往下拉，确认 <b>gist</b> 那一项是勾上的<br>
+        3. 点最下面绿色 <b>Generate token</b><br>
+        4. 复制 <code>ghp_</code> 开头那一串，粘回上面的框里<br>
+        <span style="opacity:.7">这个密钥只能读写你自己的 Gist，碰不到代码仓库。用完后可以随时去 GitHub 删掉。</span>
+      </span>
+      <button onclick="window.open('https://github.com/settings/tokens/new?scopes=gist&amp;description=zhua-geng-ideas','_blank')">去生成</button>
+    `, 'page-settings');
+    box.dataset.help = '1';
+  },
+
+  init(){
+    if (!this.on()) return;
+    this.pull(false);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) this.pull(false); });
+    window.addEventListener('online', () => this.push());
+  }
+};
+/* ==== 功能：灵感云库 END ==== */
 
 
 /* ==== 功能：我的AI工具 START ==== */
@@ -1214,6 +1450,10 @@ const Ideas = {
   KEY: 'ideas',
   render(){
     const el = document.getElementById('ideaBody');
+    const h = document.getElementById('ideaCloudHint');
+    if (h) h.textContent = (typeof IdeaCloud !== 'undefined' && IdeaCloud.on())
+      ? '☁️ 已开启云灵感 —— 这条存完会自动上传，手机上也能看到'
+      : '☁️ 现在只存在这台设备。到 ⚙️ 设置里开「云灵感」，手机也能读写';
     if (!el) return;
     const items = Store.list(this.KEY, (a,b) => (b._u||0)-(a._u||0));
     if (!items.length){ el.innerHTML = '<div class="empty">灵感池空着，刷到好点子就存进来</div>'; return; }
@@ -1224,12 +1464,14 @@ const Ideas = {
         <button class="del" onclick="Ideas.del('${x.id}')">✕</button>
       </div>`).join('');
   },
+  cloud(){ if (typeof IdeaCloud !== 'undefined') IdeaCloud.schedule(); },
   add(){
     const el = document.getElementById('ideaInput');
     const text = el.value.trim();
     if (!text) return;
     Store.upsert(this.KEY, { id: Util.uid(), text, done:false });
     el.value = '';
+    this.cloud();
     this.render();
   },
   toggle(id){
@@ -1237,9 +1479,10 @@ const Ideas = {
     if (!it) return;
     Store.upsert(this.KEY, { id, text: it.text, done: !it.done });
     if (typeof Sync !== 'undefined' && Sync.on()) Sync.schedule();
+    this.cloud();
     this.render();
   },
-  del(id){ Store.softDelete(this.KEY, id); if (typeof Sync !== 'undefined' && Sync.on()) Sync.schedule(); this.render(); }
+  del(id){ Store.softDelete(this.KEY, id); if (typeof Sync !== 'undefined' && Sync.on()) Sync.schedule(); this.cloud(); this.render(); }
 };
 /* ==== 功能：选题灵感 END ==== */
 
