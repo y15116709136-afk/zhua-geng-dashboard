@@ -1010,6 +1010,9 @@ const Sync = {
       if (String(j.message || '').includes('rate limit')) throw new Error('操作太频繁，等一分钟再试');
       throw new Error('密钥权限不够，生成时请勾选 gist（403）');
     }
+    if (r.status === 404 && (opts.method || 'GET').toUpperCase() === 'POST' && path.indexOf('/gists') === 0) {
+      throw new Error('创建 Gist 失败：密钥没有 gist 权限，去重新生成时务必勾选 gist 一项');
+    }
     if (!r.ok) {
       const j = await r.json().catch(() => ({}));
       throw new Error(j.message || ('请求失败 ' + r.status));
