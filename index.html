@@ -1359,7 +1359,7 @@ const Tools = {
 /* ==== 功能：课程 START ====
    剪辑 / 拍摄 / AI 三类，每个视频每天看一次。
    预置了 9 门课的讲义；你的课程视频导入后就能直接播。 */
-const COURSE_VID = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/';
+const COURSE_SEED_V = 2;
 const Courses = {
   KEY: 'courses',
   CATS: ['AI基础学习', '剪辑学习', '拍摄学习', '编导学习'],
@@ -1367,23 +1367,34 @@ const Courses = {
 
   // 预置课程：视频走网址直链，打开即看；url 是占位示例地址，替换成你的真实课程地址即可
   SEED: [
-    { cat:'AI基础学习', name:'生成式 AI 是什么', url:COURSE_VID+'BigBuckBunny.mp4', note:'生成式 AI 能按文字指令产出文字/图片/视频/音频。对创作者最有用的是「写稿、做图、粗剪」三件事；把它当助理不是替身，最终判断权在你。' },
-    { cat:'AI基础学习', name:'用 AI 写口播稿', url:COURSE_VID+'ElephantsDream.mp4', note:'把选题丢给 AI，要求带「受众+时长+风格+禁词」，让它出 3 版（钩子/干货/收尾），挑最顺的拍。别照念，改成你自己的口气。' },
-    { cat:'AI基础学习', name:'用 AI 做封面与脚本', url:COURSE_VID+'ForBiggerBlazes.mp4', note:'用 AI 出 3 张封面候选挑点击率最高的；把成片喂回 AI 反推分镜脚本，沉淀成自己的模板库。' },
-    { cat:'剪辑学习', name:'剪辑节奏：前松后紧', url:COURSE_VID+'ForBiggerEscapes.mp4', note:'钩子前置到前 3 秒；删废话比加特效重要，口头禅全剪掉。成片先静音看一遍检查节奏。' },
-    { cat:'剪辑学习', name:'转场与匹配剪辑', url:COURSE_VID+'ForBiggerFun.mp4', note:'优先用「动作匹配」转场，少用花哨特效；匹配剪辑让两个不同场景无缝接；J/L cut 让对话更顺。' },
-    { cat:'剪辑学习', name:'调色与音频', url:COURSE_VID+'ForBiggerJoyrides.mp4', note:'调色先定影调（冷/暖）再调局部；人声先降噪再调音量，背景乐压到 -22 LUFS 以下；音频比画面更重要。' },
-    { cat:'拍摄学习', name:'构图与机位', url:COURSE_VID+'ForBiggerMeltdowns.mp4', note:'手机开网格线，主体放三分线交点；说话镜头机位略高于眼；用前景遮挡制造景深，画面立刻有电影感。' },
-    { cat:'拍摄学习', name:'光线与稳定', url:COURSE_VID+'Sintel.mp4', note:'逆光拍人像用曝光补偿并让脸朝向光源；稳定器不如「手肘夹肋骨」稳；黄金小时（日落后1h）光线最柔。' },
-    { cat:'拍摄学习', name:'口播与现场', url:COURSE_VID+'SubaruOutbackOnStreetAndDirt.mp4', note:'口播离麦 15cm 加防喷罩；备提纲不背稿；拍前清场，电线杆从头上长出来最出戏；同场景多拍 3 条保底。' },
-    { cat:'编导学习', name:'选题与钩子', url:COURSE_VID+'TearsOfSteel.mp4', note:'选题从「用户的一个具体痛点」出发，不拍你想拍的拍用户想看的；钩子用反常识/提问/利益点，3 秒内抓住。' },
-    { cat:'编导学习', name:'脚本结构：钩子-干货-行动', url:COURSE_VID+'VolkswagenGTIReview.mp4', note:'标准三段：开头 3 秒钩子 → 中间 1-3 个可操作干货 → 结尾一句行动号召（关注/评论/试）。每 15 秒一个信息点，别堆。' },
-    { cat:'编导学习', name:'人设与系列化', url:COURSE_VID+'WeAreGoingOnBullrun.mp4', note:'固定人设和视觉风格让用户记住你；把内容做成系列（如「每周一个拍摄技巧」），系列比单条更容易涨粉和变现。' }
+    { sk:'ai-1', cat:'AI基础学习', name:'AI视频制作全流程（即梦/可灵/豆包/剪映）', url:'https://www.bilibili.com/video/BV1PAs1zLE6s/', note:'100集保姆级：从文生图、图生视频到脚本/配音/剪辑全流程。先跟前 10 集跑通「一张图变一段视频」，再学对口型做数字人。' },
+    { sk:'ai-2', cat:'AI基础学习', name:'即梦AI 5.0 保姆级入门（新手必看）', url:'https://www.bilibili.com/video/BV1awpuzpERC/', note:'即梦 AI 的界面、提示词写法、文生图/图生视频、首尾帧。重点学「主体+运动+镜头」提示词公式，比瞎写效果好 10 倍。' },
+    { sk:'ai-3', cat:'AI基础学习', name:'用 AI 写短视频文案（0基础）', url:'https://www.bilibili.com/video/BV15C411n7ys/', note:'把选题丢给 AI 出 3 版钩子/干货/收尾；改成自己的口气再拍。别照念，AI 文案是框架不是成品。' },
+    { sk:'cut-1', cat:'剪辑学习', name:'剪映保姆级教程（从拍摄到剪辑）', url:'https://www.bilibili.com/video/BV1aUp1zoEgu/', note:'198 小时系统课：认识界面、关键帧、蒙版、转场、调色、运镜。新手先看到第 20 集（运镜+构图）就够日常用。' },
+    { sk:'cut-2', cat:'剪辑学习', name:'手机版剪映基础教程', url:'https://www.bilibili.com/video/BV1BK411P7ia/', note:'手机剪映从 0 到 1：分割删除、文字、音频、转场。口播视频必学「识别字幕」和「文本朗读」。' },
+    { sk:'cut-3', cat:'剪辑学习', name:'电脑版剪映基础教程', url:'https://www.bilibili.com/video/BV18h41117BF/', note:'电脑剪映更高效：多轨道、关键帧、调色、导出参数。成片先静音看一遍检查节奏。' },
+    { sk:'shoot-1', cat:'拍摄学习', name:'光圈/快门/ISO/曝光基础', url:'https://www.bilibili.com/video/BV1j4411377F/', note:'4 分钟搞懂曝光三角。拍人像用大光圈虚化背景；拍运动提高快门；暗光抬高 ISO 但注意噪点。' },
+    { sk:'shoot-2', cat:'拍摄学习', name:'镜头焦段怎么选', url:'https://www.bilibili.com/video/BV137411z7yr/', note:'广角拍环境、中焦拍人、长焦压空间。手机用 1x/2x/3x 切换模拟焦段，别老用数码变焦。' },
+    { sk:'shoot-3', cat:'拍摄学习', name:'布光与影视光线', url:'https://www.bilibili.com/video/BV1664y1U7BU/', note:'9 分钟梳理《影视光线创作》：主光/辅光/轮廓光。室内用窗户光+反光板，避免顶光显老。' },
+    { sk:'edit-1', cat:'编导学习', name:'视频创作与分镜脚本设计', url:'https://www.bilibili.com/video/BV1zJ41117r6/', note:'一条视频的完整流程：创意→脚本→分镜表（镜号/画面/运镜/景别/台词）→拍摄→剪辑。先写分镜再拍，效率翻倍。' },
+    { sk:'edit-2', cat:'编导学习', name:'分镜脚本实战（第2课）', url:'https://www.bilibili.com/video/BV1W7411c7jf/', note:'把文字拆成画面：景别（远/全/中/近/特写）和运镜（固/推/拉/摇/移/跟）怎么选，配合脚本对照练。' },
+    { sk:'edit-3', cat:'编导学习', name:'分镜脚本实战（第3课）', url:'https://www.bilibili.com/video/BV1M34y1R78H/', note:'不同题材脚本示例（vlog/旅拍/口播），学会「黄金3秒+信息点」结构，系列化内容更容易涨粉变现。' }
   ],
 
   seedIfEmpty(){
-    if (Store.get('_seededCourses') || Store.list(this.KEY).length) return;
+    this.migrateSeed();
+    if (Store.get('_seededCourses')) return;
     this.SEED.forEach(s => Store.upsert(this.KEY, Object.assign({ id: Util.uid(), cover:'', hasVideo:false }, s)));
+    Store.set('_seededCourses', true);
+  },
+
+  // 旧预设是占位示例地址（没用），seed 版本号升级时用真实 B站课程整体覆盖
+  migrateSeed(){
+    const cur = Store.get('_courseSeedV') || 0;
+    if (cur >= COURSE_SEED_V) return;
+    Store.list(this.KEY).forEach(x => Store.softDelete(this.KEY, x.id));
+    this.SEED.forEach(s => Store.upsert(this.KEY, Object.assign({ id: Util.uid(), cover:'', hasVideo:false }, s)));
+    Store.set('_courseSeedV', COURSE_SEED_V);
     Store.set('_seededCourses', true);
   },
 
@@ -1453,11 +1464,14 @@ const Courses = {
     if (it.url && it.url.trim()){
       const u = it.url.trim();
       const direct = /\.(mp4|webm|ogg|mov|m3u8)(\?|#|$)/i.test(u);
+      let src = u;
+      const bm = u.match(/bilibili\.com\/video\/(BV[\w]+)/);
+      if (bm) src = 'https://player.bilibili.com/player.html?bvid='+bm[1]+'&page=1&high_quality=1&danmaku=0';
       const note = it.note ? '<p style="white-space:pre-wrap;margin-top:10px">'+Util.esc(it.note)+'</p>' : '';
-      const link = '<p class="hint"><a href="'+Util.esc(u)+'" target="_blank" rel="noopener">打不开？点此在新标签打开</a></p>';
+      const link = '<p class="hint"><a href="'+Util.esc(u)+'" target="_blank" rel="noopener">打不开？点此在 B站新标签打开</a></p>';
       box.innerHTML = direct
         ? '<video src="'+Util.esc(u)+'" controls autoplay style="width:100%;border-radius:14px;background:#000;max-height:70vh"></video>'+note+link
-        : '<iframe src="'+Util.esc(u)+'" allow="autoplay; fullscreen" allowfullscreen style="width:100%;height:62vh;border:0;border-radius:14px"></iframe>'+note+link;
+        : '<iframe src="'+Util.esc(src)+'" allow="autoplay; fullscreen" allowfullscreen style="width:100%;height:62vh;border:0;border-radius:14px"></iframe>'+note+link;
       openModal('playerModal');
     } else if (it.note){
       box.innerHTML = '<p style="white-space:pre-wrap">'+Util.esc(it.note)+'</p><p class="hint">还没填视频网址，编辑里加上就能直接播。</p>';
