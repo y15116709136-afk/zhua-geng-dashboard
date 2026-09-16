@@ -331,15 +331,11 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
 
     <!-- ==== 功能：课程 START ==== -->
     <section class="page" id="page-courses">
-      <div class="page-title">课程 · 每天学一遍</div>
-      <div class="page-sub">剪辑 / 拍摄 / AI 三类，每个视频每天看一次</div>
+      <div class="page-title">课程 · 每天一课</div>
+      <div class="page-sub">AI基础学习 / 剪辑学习 / 拍摄学习 / 编导学习，每天自动推一节，打开就能看</div>
       <div class="card wide">
-        <h2>📅 今日学习 <span class="hint" id="courseToday" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span></h2>
-        <div id="courseTodo"></div>
-        <div class="row" style="margin-top:12px">
-          <button class="btn" onclick="Courses.importVideo()">＋ 导入课程视频</button>
-          <button class="btn ghost" onclick="Courses.showAll()">看全部课程</button>
-        </div>
+        <h2>📺 今日一课 <span class="hint" id="courseDailyHint" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span></h2>
+        <div id="courseDaily"></div>
       </div>
       <div class="card wide">
         <h2>📚 课程库 <span class="hint" id="courseFilterHint" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span></h2>
@@ -487,6 +483,9 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
           <option>剪辑</option><option>拍摄</option><option>AI</option><option>参考</option><option>其他</option>
         </select>
         <textarea id="editNote" placeholder="备注 / 脚本内容" style="margin-top:8px;min-height:120px"></textarea>
+        <div id="editUrlRow" style="display:none;margin-top:8px">
+          <input type="url" id="editUrl" placeholder="课程视频网址（.mp4 直链，或 B站/YouTube 链接）" style="width:100%">
+        </div>
         <div class="row" style="margin-top:10px">
           <button class="btn" onclick="Media.saveEdit()">保存</button>
           <button class="btn ghost" onclick="Media.closeEdit()">取消</button>
@@ -1086,8 +1085,11 @@ const Media = {
     this._ctx = { kind:'media', id };
     document.getElementById('editTitle').textContent = '改名 / 分类';
     document.getElementById('editName').value = it.name || '';
-    document.getElementById('editCat').value = it.cat || '其他';
+    const sel = document.getElementById('editCat');
+    sel.innerHTML = ['剪辑','拍摄','AI','参考','其他'].map(c => `<option ${c===it.cat?'selected':''}>${c}</option>`).join('');
     document.getElementById('editNote').value = it.note || '';
+    const urlRow = document.getElementById('editUrlRow');
+    if (urlRow) urlRow.style.display = 'none';
     openModal('editModal');
   },
 
@@ -1099,7 +1101,8 @@ const Media = {
     if (this._ctx.kind === 'media'){
       Store.upsert(this.KEY, { id: this._ctx.id, name:v, cat, note });
     } else {
-      Store.upsert('courses', { id: this._ctx.id, name:v, cat, note });
+      const url = (document.getElementById('editUrl').value || '').trim();
+      Store.upsert('courses', { id: this._ctx.id, name:v, cat, note, url });
     }
     closeModal('editModal');
     this.render(); Courses.render();
@@ -1356,22 +1359,26 @@ const Tools = {
 /* ==== 功能：课程 START ====
    剪辑 / 拍摄 / AI 三类，每个视频每天看一次。
    预置了 9 门课的讲义；你的课程视频导入后就能直接播。 */
+const COURSE_VID = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/';
 const Courses = {
   KEY: 'courses',
-  CATS: ['剪辑', '拍摄', 'AI'],
+  CATS: ['AI基础学习', '剪辑学习', '拍摄学习', '编导学习'],
   _filter: '',
 
-  // 预置讲义（真实可学的内容；视频由你导入）
+  // 预置课程：视频走网址直链，打开即看；url 是占位示例地址，替换成你的真实课程地址即可
   SEED: [
-    { cat:'剪辑', name:'剪辑节奏：前松后紧', note:'钩子前置到前 3 秒；删废话比加特效重要，口头禅全剪掉。成片前静音看一遍检查节奏。' },
-    { cat:'剪辑', name:'转场与匹配剪辑', note:'优先用「动作匹配」转场，少用花哨特效；用匹配剪辑让两个不同场景无缝接；J/L cut 让对话更顺。' },
-    { cat:'剪辑', name:'调色与音频', note:'调色先定影调（冷/暖）再调局部；人声先降噪再调音量，背景乐压到 -22 LUFS 以下；音频比画面更重要。' },
-    { cat:'拍摄', name:'构图与机位', note:'手机开网格线，主体放三分线交点；说话镜头机位略高于眼；用前景遮挡制造景深，画面立刻有电影感。' },
-    { cat:'拍摄', name:'光线与稳定', note:'逆光拍人像用曝光补偿并让脸朝向光源；稳定器不如「手肘夹肋骨」稳；黄金小时（日落后1h）光线最柔。' },
-    { cat:'拍摄', name:'口播与现场', note:'口播离麦 15cm 加防喷罩；备提纲不背稿；拍前清场，电线杆从头上长出来最出戏；同场景多拍 3 条保底。' },
-    { cat:'AI', name:'AI 写口播稿', note:'用 AI 把选题扩成 3 版口播稿（钩子/干货/收尾），挑最顺的拍；指令要带「受众+时长+风格+禁词」。' },
-    { cat:'AI', name:'AI 做封面与脚本', note:'用 AI 出 3 张封面候选挑点击率最高的；把成片喂给 AI 反推分镜脚本，沉淀成自己的模板。' },
-    { cat:'AI', name:'AI 配音与剪辑辅助', note:'用 AI 配音补环境音/旁白；用 AI 自动踩点粗剪再人工精修；AI 音色要跟账号人设一致。' }
+    { cat:'AI基础学习', name:'生成式 AI 是什么', url:COURSE_VID+'BigBuckBunny.mp4', note:'生成式 AI 能按文字指令产出文字/图片/视频/音频。对创作者最有用的是「写稿、做图、粗剪」三件事；把它当助理不是替身，最终判断权在你。' },
+    { cat:'AI基础学习', name:'用 AI 写口播稿', url:COURSE_VID+'ElephantsDream.mp4', note:'把选题丢给 AI，要求带「受众+时长+风格+禁词」，让它出 3 版（钩子/干货/收尾），挑最顺的拍。别照念，改成你自己的口气。' },
+    { cat:'AI基础学习', name:'用 AI 做封面与脚本', url:COURSE_VID+'ForBiggerBlazes.mp4', note:'用 AI 出 3 张封面候选挑点击率最高的；把成片喂回 AI 反推分镜脚本，沉淀成自己的模板库。' },
+    { cat:'剪辑学习', name:'剪辑节奏：前松后紧', url:COURSE_VID+'ForBiggerEscapes.mp4', note:'钩子前置到前 3 秒；删废话比加特效重要，口头禅全剪掉。成片先静音看一遍检查节奏。' },
+    { cat:'剪辑学习', name:'转场与匹配剪辑', url:COURSE_VID+'ForBiggerFun.mp4', note:'优先用「动作匹配」转场，少用花哨特效；匹配剪辑让两个不同场景无缝接；J/L cut 让对话更顺。' },
+    { cat:'剪辑学习', name:'调色与音频', url:COURSE_VID+'ForBiggerJoyrides.mp4', note:'调色先定影调（冷/暖）再调局部；人声先降噪再调音量，背景乐压到 -22 LUFS 以下；音频比画面更重要。' },
+    { cat:'拍摄学习', name:'构图与机位', url:COURSE_VID+'ForBiggerMeltdowns.mp4', note:'手机开网格线，主体放三分线交点；说话镜头机位略高于眼；用前景遮挡制造景深，画面立刻有电影感。' },
+    { cat:'拍摄学习', name:'光线与稳定', url:COURSE_VID+'Sintel.mp4', note:'逆光拍人像用曝光补偿并让脸朝向光源；稳定器不如「手肘夹肋骨」稳；黄金小时（日落后1h）光线最柔。' },
+    { cat:'拍摄学习', name:'口播与现场', url:COURSE_VID+'SubaruOutbackOnStreetAndDirt.mp4', note:'口播离麦 15cm 加防喷罩；备提纲不背稿；拍前清场，电线杆从头上长出来最出戏；同场景多拍 3 条保底。' },
+    { cat:'编导学习', name:'选题与钩子', url:COURSE_VID+'TearsOfSteel.mp4', note:'选题从「用户的一个具体痛点」出发，不拍你想拍的拍用户想看的；钩子用反常识/提问/利益点，3 秒内抓住。' },
+    { cat:'编导学习', name:'脚本结构：钩子-干货-行动', url:COURSE_VID+'VolkswagenGTIReview.mp4', note:'标准三段：开头 3 秒钩子 → 中间 1-3 个可操作干货 → 结尾一句行动号召（关注/评论/试）。每 15 秒一个信息点，别堆。' },
+    { cat:'编导学习', name:'人设与系列化', url:COURSE_VID+'WeAreGoingOnBullrun.mp4', note:'固定人设和视觉风格让用户记住你；把内容做成系列（如「每周一个拍摄技巧」），系列比单条更容易涨粉和变现。' }
   ],
 
   seedIfEmpty(){
@@ -1387,22 +1394,10 @@ const Courses = {
 
   render(){
     this.seedIfEmpty();
-    const todo = document.getElementById('courseTodo');
-    const todayEl = document.getElementById('courseToday');
+    this.renderDaily();
     const body = document.getElementById('courseBody');
     if (!body) return;
-    const all = Store.list(this.KEY, (a,b) => (b._u||0) - (a._u||0));
-    const pending = all.filter(x => !this.studiedToday(x));
-    if (todayEl) todayEl.textContent = `今日已学 ${all.length - pending.length} / 共 ${all.length}`;
-    if (todo){
-      todo.innerHTML = pending.length
-        ? pending.map(x => `
-          <div class="item">
-            <span class="box" onclick="Courses.study('${x.id}')">▶</span>
-            <span class="grow" onclick="Courses.study('${x.id}')">${Util.esc(x.name)} <span class="tag">${Util.esc(x.cat)}</span></span>
-          </div>`).join('')
-        : '<div class="empty">🎉 今天的课都学完了，明天再来</div>';
-    }
+    let all = Store.list(this.KEY, (a,b) => (a._u||0) - (b._u||0));
     let list = all;
     if (this._filter) list = list.filter(x => x.cat === this._filter);
     document.getElementById('courseChips').innerHTML = ['', ...this.CATS].map(c =>
@@ -1411,63 +1406,77 @@ const Courses = {
     body.innerHTML = list.map(x => `
       <div class="mcard ${this.studiedToday(x)?'done':''}">
         <div class="mcover" onclick="Courses.study('${x.id}')">
-          ${x.cover ? '<img src="'+x.cover+'" alt="">' : '<div class="mplaceholder">'+(x.hasVideo?'🎬':'📘')+'</div>'}
-          ${x.hasVideo ? '<span class="mplay">▶</span>' : ''}
+          ${x.cover ? '<img src="'+x.cover+'" alt="">' : '<div class="mplaceholder">🎬</div>'}
+          <span class="mplay">▶</span>
         </div>
         <div class="mname" onclick="Courses.study('${x.id}')">${Util.esc(x.name)}</div>
         <div class="mtags"><span class="tag">${Util.esc(x.cat)}</span>${this.studiedToday(x)?'<span class="tag">✓今日已学</span>':''}</div>
         <div class="mops">
-          <a class="inline-link" onclick="Courses.importVideoFor('${x.id}')">📥 导入视频</a>
+          <a class="inline-link" onclick="Courses.study('${x.id}')">▶ 观看</a>
           <a class="inline-link" onclick="Courses.edit('${x.id}')">✎</a>
           <a class="inline-link" onclick="Courses.del('${x.id}')">🗑</a>
         </div>
       </div>`).join('');
   },
 
-  async importVideo(){
-    const f = await pickFile('video/*');
-    if (!f) return;
-    const id = Util.uid();
-    const cover = await snapshotVideo(f);
-    await Blobs.put(id, f);
-    Store.upsert(this.KEY, { id, name: f.name.replace(/\.[^.]+$/, ''), cat:'其他', cover, hasVideo:true, studied:{} });
-    UI.toast('已导入课程视频：' + f.name);
-    this.render();
-  },
-
-  async importVideoFor(id){
-    const f = await pickFile('video/*');
-    if (!f) return;
-    const it = Store.list(this.KEY).find(x => x.id === id) || {};
-    const cover = await snapshotVideo(f);
-    await Blobs.put(id, f);
-    Store.upsert(this.KEY, { id, name: it.name || f.name.replace(/\.[^.]+$/, ''), cat: it.cat || '其他', cover, hasVideo:true, studied: it.studied || {} });
-    UI.toast('已关联视频');
-    this.render();
+  renderDaily(){
+    const wrap = document.getElementById('courseDaily');
+    if (!wrap) return;
+    const all = Store.list(this.KEY, (a,b) => (a._u||0) - (b._u||0));
+    const hint = document.getElementById('courseDailyHint');
+    if (!all.length){ wrap.innerHTML = '<div class="empty">还没有课程</div>'; if (hint) hint.textContent = ''; return; }
+    const dayIdx = Math.floor(Date.now() / 86400000);
+    const it = all[dayIdx % all.length];
+    const done = this.studiedToday(it);
+    wrap.innerHTML = `
+      <div class="mcard" style="max-width:520px">
+        <div class="mcover" onclick="Courses.study('${it.id}')">
+          ${it.cover ? '<img src="'+it.cover+'" alt="">' : '<div class="mplaceholder">🎬</div>'}
+          <span class="mplay">▶</span>
+        </div>
+        <div class="mname" onclick="Courses.study('${it.id}')">${Util.esc(it.name)}</div>
+        <div class="mtags"><span class="tag">${Util.esc(it.cat)}</span>${done?'<span class="tag">✓今日已学</span>':''}</div>
+        <div class="mops">
+          <a class="inline-link" onclick="Courses.study('${it.id}')">▶ 观看</a>
+          <a class="inline-link" onclick="Courses.markToday('${it.id}')">${done?'已打卡 ✓':'标记已学'}</a>
+          <a class="inline-link" onclick="Courses.edit('${it.id}')">✎</a>
+          <a class="inline-link" onclick="Courses.del('${it.id}')">🗑</a>
+        </div>
+      </div>`;
+    if (hint) hint.textContent = done ? '今天这节学完啦' : '点开直接看，每天自动换一节';
   },
 
   async study(id){
     const it = Store.list(this.KEY).find(x => x.id === id);
     if (!it) return;
     const box = document.getElementById('playerContent');
-    if (it.hasVideo){
-      const blob = await Blobs.get(id);
-      if (!blob){ box.innerHTML = '<p class="hint">这台设备还没导入这个视频，去导入过它的设备看，或点「📥 导入视频」。</p>'; }
-      else {
-        const url = URL.createObjectURL(blob);
-        box.innerHTML = '<video src="'+url+'" controls autoplay style="width:100%;border-radius:14px;background:#000"></video>' +
-          (it.note ? '<p style="white-space:pre-wrap;margin-top:10px">'+Util.esc(it.note)+'</p>' : '');
-      }
+    if (it.url && it.url.trim()){
+      const u = it.url.trim();
+      const direct = /\.(mp4|webm|ogg|mov|m3u8)(\?|#|$)/i.test(u);
+      const note = it.note ? '<p style="white-space:pre-wrap;margin-top:10px">'+Util.esc(it.note)+'</p>' : '';
+      const link = '<p class="hint"><a href="'+Util.esc(u)+'" target="_blank" rel="noopener">打不开？点此在新标签打开</a></p>';
+      box.innerHTML = direct
+        ? '<video src="'+Util.esc(u)+'" controls autoplay style="width:100%;border-radius:14px;background:#000;max-height:70vh"></video>'+note+link
+        : '<iframe src="'+Util.esc(u)+'" allow="autoplay; fullscreen" allowfullscreen style="width:100%;height:62vh;border:0;border-radius:14px"></iframe>'+note+link;
       openModal('playerModal');
     } else if (it.note){
-      box.innerHTML = '<p style="white-space:pre-wrap">'+Util.esc(it.note)+'</p><p class="hint">还没导入视频，导入后这里直接播。</p>';
+      box.innerHTML = '<p style="white-space:pre-wrap">'+Util.esc(it.note)+'</p><p class="hint">还没填视频网址，编辑里加上就能直接播。</p>';
       openModal('playerModal');
     } else {
-      UI.toast('这门课还没有内容，先导入视频或写讲义');
+      UI.toast('这门课还没有内容，编辑里填网址或讲义');
     }
     const studied = Object.assign({}, it.studied || {});
     studied[Util.today()] = true;
-    Store.upsert(this.KEY, { id, name: it.name, cat: it.cat, note: it.note, cover: it.cover, hasVideo: it.hasVideo, studied });
+    Store.upsert(this.KEY, { id, name: it.name, cat: it.cat, note: it.note, cover: it.cover, url: it.url, studied });
+    this.render();
+  },
+
+  markToday(id){
+    const it = Store.list(this.KEY).find(x => x.id === id);
+    if (!it) return;
+    const studied = Object.assign({}, it.studied || {});
+    studied[Util.today()] = true;
+    Store.upsert(this.KEY, { id, name: it.name, cat: it.cat, note: it.note, cover: it.cover, url: it.url, studied });
     this.render();
   },
 
@@ -1475,17 +1484,21 @@ const Courses = {
     const it = Store.list(this.KEY).find(x => x.id === id);
     if (!it) return;
     Media._ctx = { kind:'course', id };
-    document.getElementById('editTitle').textContent = '编辑课程';
+    document.getElementById('editTitle').textContent = '编辑课程（可填视频网址）';
     document.getElementById('editName').value = it.name || '';
-    document.getElementById('editCat').value = it.cat || '其他';
+    const sel = document.getElementById('editCat');
+    sel.innerHTML = this.CATS.map(c => `<option ${c===it.cat?'selected':''}>${c}</option>`).join('');
     document.getElementById('editNote').value = it.note || '';
+    const urlRow = document.getElementById('editUrlRow');
+    const urlI = document.getElementById('editUrl');
+    if (urlRow) urlRow.style.display = '';
+    if (urlI) urlI.value = it.url || '';
     openModal('editModal');
   },
 
   del(id){
     if (!confirm('删掉这门课？')) return;
     Store.softDelete(this.KEY, id);
-    Blobs.del(id);
     this.render();
   }
 };
