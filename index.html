@@ -253,6 +253,28 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
 @media (min-width:1700px){
   .main > .page.on{max-width:1400px;margin:0 auto}
 }
+
+    /* ── 灵感云库 / 课程 网格 ── */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px;margin-top:6px}
+    .mcard{background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+    .mcover{position:relative;aspect-ratio:16/10;background:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .mcover img{width:100%;height:100%;object-fit:cover}
+    .mplaceholder{font-size:34px;color:#fff;opacity:.85}
+    .mplay{position:absolute;right:8px;bottom:8px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px}
+    .mname{padding:8px 10px 2px;font-weight:500;font-size:14px;line-height:1.35;cursor:pointer}
+    .mtags{padding:2px 10px 6px}
+    .mops{padding:6px 10px 10px;display:flex;gap:12px;border-top:1px solid var(--line);margin-top:auto}
+    .mcard.done{opacity:.6}
+    /* ── 弹层 ── */
+    .modal{position:fixed;inset:0;background:rgba(20,16,32,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+    .modal.on{display:flex}
+    .modal-box{background:var(--card);border-radius:20px;padding:18px;max-width:560px;width:100%;position:relative;max-height:88vh;overflow:auto}
+    .modal-box h2{margin:0 0 12px;font-size:18px}
+    .modal-box textarea{width:100%}
+    /* ── 筛选 chips ── */
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:20px;padding:5px 14px;font-size:13px;cursor:pointer}
+    .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 </style>
 </head>
 <body>
@@ -307,19 +329,25 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
     </section>
     <!-- ==== 功能：我的AI工具 END ==== -->
 
-    <!-- ==== 功能：每日技巧 START ==== -->
-    <section class="page" id="page-tips">
-      <div class="page-title">每日技巧</div>
-      <div class="page-sub">每天一张拍摄 / 剪辑技巧卡，攒够 60 天</div>
+    <!-- ==== 功能：课程 START ==== -->
+    <section class="page" id="page-courses">
+      <div class="page-title">课程 · 每天学一遍</div>
+      <div class="page-sub">剪辑 / 拍摄 / AI 三类，每个视频每天看一次</div>
       <div class="card wide">
-        <div class="row" style="margin-bottom:10px">
-          <button class="btn ghost" onclick="Tips.go(-1)">← 前一天</button>
-          <button class="btn ghost" onclick="Tips.go(1)">后一天 →</button>
+        <h2>📅 今日学习 <span class="hint" id="courseToday" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span></h2>
+        <div id="courseTodo"></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" onclick="Courses.importVideo()">＋ 导入课程视频</button>
+          <button class="btn ghost" onclick="Courses.showAll()">看全部课程</button>
         </div>
-        <div id="tipBody"></div>
+      </div>
+      <div class="card wide">
+        <h2>📚 课程库 <span class="hint" id="courseFilterHint" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span></h2>
+        <div class="chips" id="courseChips" style="margin-bottom:10px"></div>
+        <div id="courseBody" class="grid"></div>
       </div>
     </section>
-    <!-- ==== 功能：每日技巧 END ==== -->
+    <!-- ==== 功能：课程 END ==== -->
 
     <!-- ==== 功能：提醒 START ==== -->
     <section class="page" id="page-remind">
@@ -348,71 +376,30 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
     </section>
     <!-- ==== 功能：今日计划 END ==== -->
 
-    <!-- ==== 功能：平台数据 START ==== -->
-    <section class="page" id="page-platform">
-      <div class="page-title">平台数据</div>
-      <div class="page-sub">各平台数据 / 待办轻量手记</div>
-      <div class="card wide">
-        <h2>📈 我的平台</h2>
-        <div class="row" style="margin-bottom:12px">
-          <input type="text" id="platInput" placeholder="加一个平台，如：视频号">
-          <button class="btn" onclick="Platform.add()">添加</button>
-        </div>
-        <div id="platBody"></div>
-        <p class="hint">填了会本地保存，换设备同步。数字填粉丝/播放增量，备注填当天的待办或观察。</p>
-      </div>
-    </section>
-    <!-- ==== 功能：平台数据 END ==== -->
 
     <!-- ==== 功能：灵感云库 START ==== -->
     <section class="page" id="page-ideas">
       <div class="page-title">灵感云库</div>
-      <div class="page-sub">每个选题记下对应的视频和脚本，拍前翻一翻</div>
+      <div class="page-sub">导入视频 / 脚本，外出拍摄时手机翻一眼就能核对</div>
       <div class="card wide">
         <h2>☁️ 灵感云库
           <span class="hint" id="ideaState" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span>
         </h2>
-
         <div class="row" style="margin-bottom:10px">
-          <input type="text" id="ideaInput" placeholder="记一个选题，如：七龙珠名场面二创">
-          <button class="btn" id="ideaSaveBtn" onclick="Ideas.add()">存</button>
-          <button class="btn ghost" onclick="Ideas.openForm()">关联文件</button>
+          <button class="btn" onclick="Media.importVideo()">📥 导入视频</button>
+          <button class="btn" onclick="Media.importScript()">📥 导入脚本</button>
+          <span class="grow"></span>
+          <select id="ideaCat" onchange="Media.render()" style="max-width:130px">
+            <option value="">全部分类</option>
+            <option>剪辑</option><option>拍摄</option><option>AI</option><option>参考</option><option>其他</option>
+          </select>
         </div>
-
-        <div id="ideaForm" style="display:none;margin-bottom:12px">
-          <p class="hint" style="margin:0 0 8px">
-            只填<b>文件名和文件夹名</b>，不上传原文件（视频太大，云端只同步名字）。<br>
-            填好后，在<b>电脑</b>上点条目下的按钮就能直接打开对应视频 / 脚本 / 素材夹。
-          </p>
-          <input type="text" id="ideaVideo"  placeholder="视频文件名，如：龙珠二创_成片.mp4">
-          <input type="text" id="ideaScript" placeholder="脚本文件名，如：龙珠二创_脚本.docx" style="margin-top:8px">
-          <input type="text" id="ideaFolder" placeholder="素材文件夹名（留空＝跟选题同名）" style="margin-top:8px">
-          <div class="row" style="margin-top:10px">
-            <button class="btn" onclick="Ideas.add()">保存</button>
-            <button class="btn ghost" onclick="Ideas.closeForm()">取消</button>
-          </div>
-        </div>
-
         <p class="hint" id="ideaCloudHint"></p>
-        <div id="ideaBody"></div>
+        <div id="ideaBody" class="grid"></div>
       </div>
     </section>
     <!-- ==== 功能：灵感云库 END ==== -->
 
-    <!-- ==== 功能：周复盘 START ==== -->
-    <section class="page" id="page-recap">
-      <div class="page-title">这一周</div>
-      <div class="page-sub">周日晚上看一眼，比任何提醒都管用</div>
-      <div class="card wide">
-        <div class="hero"><span class="num" id="recapNum">0</span><span class="unit">件事做完了</span></div>
-        <p class="hint" id="recapHint" style="margin-top:2px"></p>
-        <div class="row" style="margin-top:18px">
-          <button class="btn" onclick="Recap.makeCard()">生成图卡</button>
-        </div>
-        <p class="hint">生成一张能存下来的图，想发就发。图上不含你的具体记录内容。</p>
-      </div>
-    </section>
-    <!-- ==== 功能：周复盘 END ==== -->
 
     <!-- 设置页是必备的，不要删 -->
     <!-- ==== 功能：设置 START ==== -->
@@ -438,7 +425,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
         <h2>☁️ 云同步 <span class="hint" id="cloudState" style="margin:0 0 0 auto;font-size:var(--fs-meta)"></span></h2>
         <div id="cloudOff">
           <p class="hint" style="margin-top:0">
-            手机和电脑填<b>同一个密钥</b>，看到的就是同一份数据（灵感、计划、提醒、数据全同步）。<br>
+            手机和电脑填<b>同一个密钥</b>，看到的就是同一份数据（灵感、计划、提醒、课程全同步；视频文件只存本机）。<br>
             存在你自己的 GitHub 私有片段里，不经过任何第三方服务器。<br>
             <b>填一次就永久记住，之后不用再登录、不用输密码。</b>断网照样能记，联网自动补上。
           </p>
@@ -467,21 +454,6 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
       </div>
       <!-- ==== 云同步卡片 END ==== -->
 
-      <!-- ==== 本机素材目录卡片 START ==== -->
-      <div class="card" id="mediaCard">
-        <h2>📁 本机素材目录</h2>
-        <p class="hint" style="margin-top:0;margin-bottom:10px">
-          填你放视频和脚本的<b>总文件夹</b>，电脑上一键打开素材就靠它。<br>
-          例：<span class="mono">E:\短视频素材</span>
-        </p>
-        <input type="text" id="mediaRoot" placeholder="E:\短视频素材">
-        <div class="row" style="margin-top:10px">
-          <button class="btn" onclick="Settings.saveMediaRoot()">保存</button>
-          <button class="btn ghost" onclick="Settings.openMediaRoot()">在电脑上打开</button>
-        </div>
-        <p class="hint" id="mediaHint"></p>
-      </div>
-      <!-- ==== 本机素材目录卡片 END ==== -->
 
       <div class="card">
         <h2>⚠️ 危险操作</h2>
@@ -497,6 +469,31 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
       </div>
     </section>
     <!-- ==== 功能：设置 END ==== -->
+    <!-- ==== 播放 / 查看 弹层 START ==== -->
+    <div id="playerModal" class="modal" onclick="if(event.target===this)Media.closePlayer()">
+      <div class="modal-box">
+        <button class="del" style="position:absolute;top:10px;right:10px" onclick="Media.closePlayer()">✕</button>
+        <div id="playerContent"></div>
+      </div>
+    </div>
+    <!-- ==== 播放 / 查看 弹层 END ==== -->
+
+    <!-- ==== 编辑 弹层 START ==== -->
+    <div id="editModal" class="modal" onclick="if(event.target===this)Media.closeEdit()">
+      <div class="modal-box">
+        <h2 id="editTitle">编辑</h2>
+        <input type="text" id="editName" placeholder="名称">
+        <select id="editCat" style="margin-top:8px">
+          <option>剪辑</option><option>拍摄</option><option>AI</option><option>参考</option><option>其他</option>
+        </select>
+        <textarea id="editNote" placeholder="备注 / 脚本内容" style="margin-top:8px;min-height:120px"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" onclick="Media.saveEdit()">保存</button>
+          <button class="btn ghost" onclick="Media.closeEdit()">取消</button>
+        </div>
+      </div>
+    </div>
+    <!-- ==== 编辑 弹层 END ==== -->
 
   </main>
 </div>
@@ -793,12 +790,10 @@ const UI = {
 const App = {
   routes: [
     { id:'tools',    icon:'🛠️', name:'AI工具', onShow: () => Tools.render()  },
-    { id:'tips',     icon:'🎓', name:'技巧',   onShow: () => Tips.render()   },
+    { id:'courses',     icon:'🎓', name:'课程',   onShow: () => Courses.render()   },
     { id:'remind',   icon:'💊', name:'提醒',   onShow: () => Remind.render() },
     { id:'plan',     icon:'✅', name:'计划',   onShow: () => Plan.render()   },
-    { id:'platform', icon:'📈', name:'数据',   onShow: () => Platform.render()},
-    { id:'ideas',    icon:'☁️', name:'灵感云库', onShow: () => Ideas.render() },
-    { id:'recap',    icon:'📊', name:'复盘',   onShow: () => Recap.render()  },
+    { id:'ideas',    icon:'☁️', name:'灵感云库', onShow: () => Media.render() },
     { id:'settings', icon:'⚙️', name:'设置',   onShow: () => Settings.render()}
   ],
 
@@ -825,7 +820,7 @@ const App = {
     this.checkBackup();
     if (typeof Sync !== 'undefined') Sync.init();
     if (typeof Sync !== 'undefined' && !Sync.on()) Sync.status('');
-    Ideas.render();
+    Media.render();
   },
 
   refresh(){
@@ -852,12 +847,9 @@ const App = {
    Settings · 设置页
    ═══════════════════════════════════════════════════════════ */
 const Settings = {
-  keys: [],
-
   render(){
     this.refreshBackupInfo();
     this.renderCloud();
-    this.renderMedia();
   },
 
   renderCloud(){
@@ -874,29 +866,6 @@ const Settings = {
       const a = document.getElementById('cloudLink');
       if (a) a.href = Sync.cfg().url || '#';
     }
-  },
-
-  renderMedia(){
-    const el = document.getElementById('mediaRoot');
-    const hint = document.getElementById('mediaHint');
-    if (el) el.value = Store.get('_mediaRoot', '');
-    if (hint) hint.textContent = Store.get('_mediaRoot')
-      ? '已设置。灵感条目填的文件夹名会拼在它下面。'
-      : '没填也能用，只是点「打开素材夹」时会直接打开你填的文件名（可能打不开）。';
-  },
-
-  saveMediaRoot(){
-    const v = (document.getElementById('mediaRoot').value || '').trim().replace(/[/\\]+$/, '');
-    Store.set('_mediaRoot', v);
-    this.renderMedia();
-    Ideas.render();
-    UI.toast(v ? '已保存：' + v : '已清空');
-  },
-
-  openMediaRoot(){
-    const v = Store.get('_mediaRoot', '');
-    if (!v) return UI.toast('先填素材目录');
-    Local.open(v);
   },
 
   refreshBackupInfo(){
@@ -980,6 +949,173 @@ const Local = {
      2. 绝不轮询 —— 只在「打开时 / 切回前台 / 手动点同步」时拉取。
      3. 单文件必须先合并再上传 —— Gist 只有一个文件，直接覆盖会吞掉另一台设备的改动。
         所以每次写之前都先读一遍合并，宁可多一次请求，不能丢数据。 */
+/* ═══════════════════════════════════════════════════════════
+   Blobs · 视频二进制存这里（IndexedDB）
+   网页拿不到你的磁盘，也存不下几百 MB 的视频到 localStorage。
+   所以视频原文件只存在本机 IndexedDB，云端只同步「封面图 + 名字 + 备注」。
+   换设备看视频：在那台设备再导入一次即可。 */
+const Blobs = (() => {
+  let _db;
+  const open = () => new Promise((res, rej) => {
+    if (_db) return res(_db);
+    const r = indexedDB.open('zhuageng', 1);
+    r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('v')) r.result.createObjectStore('v'); };
+    r.onsuccess = () => { _db = r.result; res(_db); };
+    r.onerror = () => rej(r.error);
+  });
+  return {
+    async put(id, blob){ const d = await open(); await new Promise((res, rej) => { const t = d.transaction('v','readwrite'); t.objectStore('v').put(blob, id); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }); },
+    async get(id){ const d = await open(); return await new Promise((res, rej) => { const t = d.transaction('v','readonly'); const q = t.objectStore('v').get(id); q.onsuccess = () => res(q.result || null); q.onerror = () => rej(q.error); }); },
+    async del(id){ const d = await open(); await new Promise((res) => { const t = d.transaction('v','readwrite'); t.objectStore('v').delete(id); t.oncomplete = () => res(); }); }
+  };
+})();
+
+/** 视频第 ~1 秒截一帧当封面（小图，能进云端同步） */
+function snapshotVideo(file){
+  return new Promise((resolve) => {
+    const v = document.createElement('video');
+    v.preload = 'metadata'; v.muted = true;
+    const url = URL.createObjectURL(file);
+    v.src = url;
+    let done = false;
+    const finish = (data) => { if (done) return; done = true; URL.revokeObjectURL(url); resolve(data || ''); };
+    v.onloadeddata = () => { try { v.currentTime = Math.min(1, (v.duration || 2) / 2); } catch(e){} };
+    v.onseeked = () => {
+      const w = 320, h = Math.round(w * (v.videoHeight || 9) / (v.videoWidth || 16)) || 180;
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      try { cv.getContext('2d').drawImage(v, 0, 0, w, h); finish(cv.toDataURL('image/jpeg', .6)); }
+      catch(e){ finish(''); }
+    };
+    v.onerror = () => finish('');
+    setTimeout(() => finish(''), 4000);
+  });
+}
+
+/** 弹文件选择框 */
+function pickFile(accept){
+  return new Promise((res) => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = accept;
+    inp.onchange = () => res(inp.files[0] || null);
+    inp.click();
+  });
+}
+function openModal(id){ document.getElementById(id)?.classList.add('on'); }
+function closeModal(id){ document.getElementById(id)?.classList.remove('on'); }
+
+/* ==== 功能：灵感云库 START ====
+   一条 = 一个视频/脚本 + 封面 + 可编辑命名 + 分类。
+   视频原文件存本机 IndexedDB；云端只同步封面 + 名字 + 备注 / 脚本文字。 */
+const Media = {
+  KEY: 'ideas',
+  _ctx: { kind:'media', id:null },
+
+  render(){
+    const el = document.getElementById('ideaBody');
+    const h  = document.getElementById('ideaCloudHint');
+    if (h) h.textContent = (typeof Sync !== 'undefined' && Sync.on())
+      ? '☁️ 已连云端 —— 改动自动上传，手机和电脑都能看'
+      : '☁️ 现在只存在这台设备。到 ⚙️ 设置里开「云同步」，手机也能看';
+    if (!el) return;
+    const cat = (document.getElementById('ideaCat') || {}).value || '';
+    let items = Store.list(this.KEY, (a,b) => (b._u||0) - (a._u||0));
+    if (cat) items = items.filter(x => x.cat === cat);
+    if (!items.length){
+      el.innerHTML = '<div class="empty">还空着。点「导入视频 / 脚本」，外出拍摄时翻一眼就能核对</div>';
+      return;
+    }
+    el.innerHTML = items.map(x => `
+      <div class="mcard">
+        <div class="mcover" onclick="Media.play('${x.id}')">
+          ${x.cover ? '<img src="'+x.cover+'" alt="">' : '<div class="mplaceholder">'+(x.hasVideo?'🎬':'📄')+'</div>'}
+          ${x.hasVideo ? '<span class="mplay">▶</span>' : ''}
+        </div>
+        <div class="mname" onclick="Media.play('${x.id}')">${Util.esc(x.name || '未命名')}</div>
+        <div class="mtags"><span class="tag">${Util.esc(x.cat || '其他')}</span>${x.hasScript?'<span class="tag">📝脚本</span>':''}</div>
+        <div class="mops">
+          <a class="inline-link" onclick="Media.edit('${x.id}')">✎ 改名/分类</a>
+          <a class="inline-link" onclick="Media.del('${x.id}')">🗑</a>
+        </div>
+      </div>`).join('');
+  },
+
+  async importVideo(){
+    const f = await pickFile('video/*');
+    if (!f) return;
+    const id = Util.uid();
+    const cover = await snapshotVideo(f);
+    await Blobs.put(id, f);
+    Store.upsert(this.KEY, { id, name: f.name.replace(/\.[^.]+$/, ''), cat:'其他', cover, hasVideo:true, hasScript:false });
+    UI.toast('已导入：' + f.name);
+    this.render();
+  },
+
+  async importScript(){
+    const f = await pickFile('.txt,.md,.text,.json,text/*');
+    if (!f) return;
+    const text = await f.text().catch(() => '');
+    const id = Util.uid();
+    Store.upsert(this.KEY, { id, name: f.name.replace(/\.[^.]+$/, ''), cat:'其他', note:text, hasScript:true });
+    UI.toast('已导入脚本：' + f.name);
+    this.render();
+  },
+
+  async play(id){
+    const it = Store.list(this.KEY).find(x => x.id === id);
+    if (!it) return;
+    const box = document.getElementById('playerContent');
+    if (it.hasVideo){
+      const blob = await Blobs.get(id);
+      if (!blob){ box.innerHTML = '<p class="hint">这台设备还没导入这个视频。去导入过它的那台设备看，或在这台重新导入。</p>'; }
+      else {
+        const url = URL.createObjectURL(blob);
+        box.innerHTML = '<video src="'+url+'" controls autoplay style="width:100%;border-radius:14px;background:#000"></video>' +
+          (it.note ? '<p style="white-space:pre-wrap;margin-top:10px">'+Util.esc(it.note)+'</p>' : '');
+      }
+    } else {
+      box.innerHTML = '<p style="white-space:pre-wrap">'+Util.esc(it.note || '（这条没有内容）')+'</p>';
+    }
+    openModal('playerModal');
+  },
+
+  closePlayer(){ closeModal('playerModal'); const c = document.getElementById('playerContent'); if (c) c.innerHTML = ''; },
+
+  edit(id){
+    const it = Store.list(this.KEY).find(x => x.id === id);
+    if (!it) return;
+    this._ctx = { kind:'media', id };
+    document.getElementById('editTitle').textContent = '改名 / 分类';
+    document.getElementById('editName').value = it.name || '';
+    document.getElementById('editCat').value = it.cat || '其他';
+    document.getElementById('editNote').value = it.note || '';
+    openModal('editModal');
+  },
+
+  saveEdit(){
+    const v = document.getElementById('editName').value.trim();
+    const cat = document.getElementById('editCat').value;
+    const note = document.getElementById('editNote').value;
+    if (!v) return UI.toast('名字不能为空');
+    if (this._ctx.kind === 'media'){
+      Store.upsert(this.KEY, { id: this._ctx.id, name:v, cat, note });
+    } else {
+      Store.upsert('courses', { id: this._ctx.id, name:v, cat, note });
+    }
+    closeModal('editModal');
+    this.render(); Courses.render();
+    UI.toast('已保存');
+  },
+  closeEdit(){ closeModal('editModal'); },
+
+  del(id){
+    const it = Store.list(this.KEY).find(x => x.id === id);
+    if (!confirm('删掉这条？' + (it ? '（' + it.name + '）' : ''))) return;
+    Store.softDelete(this.KEY, id);
+    Blobs.del(id);
+    this.render();
+  }
+};
+/* ==== 功能：灵感云库 END ==== */
 const Sync = {
   API:    'https://api.github.com',
   FILE:   'data.json',
@@ -1137,7 +1273,7 @@ const Sync = {
     Store.remove('_ideacloud');
     this.status('');
     Settings.renderCloud();
-    Ideas.render();
+    Media.render();
     UI.toast('已关闭云同步');
   },
 
@@ -1217,107 +1353,143 @@ const Tools = {
 /* ==== 功能：每日技巧 START ====
    内容按天数取模循环（用完自动从头来）。
    打卡只记「今天学没学」，避免每天重复计数。 */
-const Tips = (() => {
-  const START = '2026-09-15';   // 生成日
-  const CONTENT = [
-    {c:'拍摄', t:'拍前先定「这一个镜头只讲一件事」，贪多必糊'},
-    {c:'剪辑', t:'剪第一刀前先把素材按场景/情绪分文件夹，后期省一半时间'},
-    {c:'拍摄', t:'手机开网格线，主体放三分线交点，别总居中'},
-    {c:'剪辑', t:'卡点别只卡重音，卡动作起势最带感'},
-    {c:'拍摄', t:'逆光拍人像用曝光补偿，并把脸朝向光源'},
-    {c:'剪辑', t:'转场优先用「动作匹配」，少用花哨特效'},
-    {c:'拍摄', t:'说话镜头机位略高于眼，显脸小且不压迫'},
-    {c:'剪辑', t:'人声先做降噪再调音量，背景乐压到 -22 LUFS 以下'},
-    {c:'拍摄', t:'室内用白床单当反光板补阴影面'},
-    {c:'剪辑', t:'字幕用系统黑体，描边比阴影更清晰'},
-    {c:'拍摄', t:'稳定器不如「手肘夹肋骨」稳，省钱先练姿势'},
-    {c:'剪辑', t:'节奏前松后紧，钩子前置到前 3 秒'},
-    {c:'拍摄', t:'同场景多拍 3 条保底，后期有得选'},
-    {c:'剪辑', t:'删废话比加特效重要，口头禅全剪掉'},
-    {c:'拍摄', t:'夜景提高快门防抖，宁可升 ISO 也别糊'},
-    {c:'剪辑', t:'用 J/L cut 让对话更顺，声画不必同切'},
-    {c:'拍摄', t:'口播离麦 15cm，喷麦加防喷罩或袜子'},
-    {c:'剪辑', t:'关键帧统一缓入缓出，别让运动生硬'},
-    {c:'拍摄', t:'外景选黄金小时（日落后 1h）光线最柔'},
-    {c:'剪辑', t:'调色先定影调（冷/暖）再调局部，别逐帧乱拉'},
-    {c:'拍摄', t:'一镜到底留 2 秒头尾，方便后期掐点'},
-    {c:'剪辑', t:'音频比画面更重要，糊画能看糊声劝退'},
-    {c:'拍摄', t:'主体和背景拉开层次，虚化或换角度'},
-    {c:'剪辑', t:'片头 3 秒定调，别放 5 秒 LOGO 动画'},
-    {c:'拍摄', t:'用前景遮挡制造景深，画面立刻有电影感'},
-    {c:'剪辑', t:'多机位对齐用波形，比肉眼对嘴型准'},
-    {c:'拍摄', t:'拍产品转一圈前，先擦干净再打侧光'},
-    {c:'剪辑', t:'导出 1080p + 高码率，平台压缩后才不糊'},
-    {c:'拍摄', t:'手持走路镜头走「忍者步」，脚尖先着地'},
-    {c:'剪辑', t:'用留白和静帧制造情绪停顿，不是一直动'},
-    {c:'拍摄', t:'采访机位眼平，别俯视显得高高在上'},
-    {c:'剪辑', t:'音效是隐形剪辑师，翻页/按键声能救节奏'},
-    {c:'拍摄', t:'阴天是天然柔光箱，适合拍人不用补光'},
-    {c:'剪辑', t:'副轨铺环境音，画面立刻有空间感'},
-    {c:'拍摄', t:'拍食物 45° 俯拍最诱人，正上方显平'},
-    {c:'剪辑', t:'变速用曲线别用线性，慢动作才自然'},
-    {c:'拍摄', t:'自拍用广角边缘畸变显脸大，退远点'},
-    {c:'剪辑', t:'混音人声 -6，音乐 -18，别互抢'},
-    {c:'拍摄', t:'拍运动预判落点提前构图，别追着跑'},
-    {c:'剪辑', t:'用遮幅（黑边）改画幅，手机片也有电影框'},
-    {c:'拍摄', t:'反光水面拍倒影，对称构图省事又高级'},
-    {c:'剪辑', t:'字幕出现时机对齐说话，别早别晚'},
-    {c:'拍摄', t:'拍教程先拍成片再补空镜，结构不乱'},
-    {c:'剪辑', t:'音游类用标记点对齐鼓点，卡点不靠手感'},
-    {c:'拍摄', t:'室内暖光 + 窗外冷光，色温差出层次'},
-    {c:'剪辑', t:'删减优先级：废话 > 重复 > 慢镜头'},
-    {c:'拍摄', t:'用镜子/玻璃制造反射构图，画面翻倍'},
-    {c:'剪辑', t:'片尾留钩子或关注引导，完播率才转粉'},
-    {c:'拍摄', t:'拍远景用前景树叶框住，引导视线'},
-    {c:'剪辑', t:'统一帧率，混 25/30 会抖'},
-    {c:'拍摄', t:'口播备提纲不背稿，自然且有梗'},
-    {c:'剪辑', t:'关键消息用文字强化，别只靠口播'},
-    {c:'拍摄', t:'拍孩子/宠物蹲平视，世界才对'},
-    {c:'剪辑', t:'用「匹配剪辑」让两个不同场景无缝接'},
-    {c:'拍摄', t:'逆光剪影拍轮廓，故事感强且免调色'},
-    {c:'剪辑', t:'导出前静音看一遍，检查画面节奏'},
-    {c:'拍摄', t:'三脚架 + 延时，云动人流都成素材'},
-    {c:'剪辑', t:'人声齿音重加 de-esser，别只降整体'},
-    {c:'拍摄', t:'拍前清场，电线杆从头上长出来最出戏'},
-    {c:'剪辑', t:'成片导一张静帧截图做封面，点击率更高'}
-  ];
-  const TOTAL = CONTENT.length;
-  let offset = 0;  // 用户翻看的前/后偏移
+/* ==== 功能：课程 START ====
+   剪辑 / 拍摄 / AI 三类，每个视频每天看一次。
+   预置了 9 门课的讲义；你的课程视频导入后就能直接播。 */
+const Courses = {
+  KEY: 'courses',
+  CATS: ['剪辑', '拍摄', 'AI'],
+  _filter: '',
 
-  function dayIndex(){
-    const base = new Date(START + 'T00:00:00');
-    const diff = Math.floor((new Date(Util.today() + 'T00:00:00') - base) / 864e5);
-    return diff + offset;
-  }
+  // 预置讲义（真实可学的内容；视频由你导入）
+  SEED: [
+    { cat:'剪辑', name:'剪辑节奏：前松后紧', note:'钩子前置到前 3 秒；删废话比加特效重要，口头禅全剪掉。成片前静音看一遍检查节奏。' },
+    { cat:'剪辑', name:'转场与匹配剪辑', note:'优先用「动作匹配」转场，少用花哨特效；用匹配剪辑让两个不同场景无缝接；J/L cut 让对话更顺。' },
+    { cat:'剪辑', name:'调色与音频', note:'调色先定影调（冷/暖）再调局部；人声先降噪再调音量，背景乐压到 -22 LUFS 以下；音频比画面更重要。' },
+    { cat:'拍摄', name:'构图与机位', note:'手机开网格线，主体放三分线交点；说话镜头机位略高于眼；用前景遮挡制造景深，画面立刻有电影感。' },
+    { cat:'拍摄', name:'光线与稳定', note:'逆光拍人像用曝光补偿并让脸朝向光源；稳定器不如「手肘夹肋骨」稳；黄金小时（日落后1h）光线最柔。' },
+    { cat:'拍摄', name:'口播与现场', note:'口播离麦 15cm 加防喷罩；备提纲不背稿；拍前清场，电线杆从头上长出来最出戏；同场景多拍 3 条保底。' },
+    { cat:'AI', name:'AI 写口播稿', note:'用 AI 把选题扩成 3 版口播稿（钩子/干货/收尾），挑最顺的拍；指令要带「受众+时长+风格+禁词」。' },
+    { cat:'AI', name:'AI 做封面与脚本', note:'用 AI 出 3 张封面候选挑点击率最高的；把成片喂给 AI 反推分镜脚本，沉淀成自己的模板。' },
+    { cat:'AI', name:'AI 配音与剪辑辅助', note:'用 AI 配音补环境音/旁白；用 AI 自动踩点粗剪再人工精修；AI 音色要跟账号人设一致。' }
+  ],
 
-  return {
-    go(d){ offset += d; if (offset > 7) offset = 7; if (offset < -7) offset = -7; this.render(); },
-    render(){
-      const el = document.getElementById('tipBody');
-      if (!el) return;
-      const idx = ((dayIndex() % TOTAL) + TOTAL) % TOTAL;
-      const seq = idx + 1;
-      const tip = CONTENT[idx];
-      const doneToday = !!Store.getDaily('tips_done');
-      el.innerHTML = `
-        <div style="margin-bottom:6px"><span class="tag">${tip.c}</span>
-          <span class="hint" style="margin:0">第 ${seq}/${TOTAL} 天</span></div>
-        <p style="font-size:18px;line-height:1.7;font-weight:500">${Util.esc(tip.t)}</p>
-        <button class="btn" id="tipDone" style="margin-top:14px"
-          onclick="Tips.check()" ${doneToday?'disabled style="opacity:.6"':''}>
-          ${doneToday ? '✓ 今日已打卡' : '今天学到了，打卡'}</button>`;
-    },
-    check(){
-      if (Store.getDaily('tips_done')) return;
-      Store.setDaily('tips_done', true);
-      Store.incrDaily('recap_done', 1);
-      if (typeof Sync !== 'undefined' && Sync.on()) Sync.schedule();
-      UI.toast('打卡成功，明天见');
-      this.render();
+  seedIfEmpty(){
+    if (Store.get('_seededCourses') || Store.list(this.KEY).length) return;
+    this.SEED.forEach(s => Store.upsert(this.KEY, Object.assign({ id: Util.uid(), cover:'', hasVideo:false }, s)));
+    Store.set('_seededCourses', true);
+  },
+
+  studiedToday(it){ return !!(it.studied && it.studied[Util.today()]); },
+
+  filter(c){ this._filter = c; this.render(); },
+  showAll(){ this._filter = ''; this.render(); },
+
+  render(){
+    this.seedIfEmpty();
+    const todo = document.getElementById('courseTodo');
+    const todayEl = document.getElementById('courseToday');
+    const body = document.getElementById('courseBody');
+    if (!body) return;
+    const all = Store.list(this.KEY, (a,b) => (b._u||0) - (a._u||0));
+    const pending = all.filter(x => !this.studiedToday(x));
+    if (todayEl) todayEl.textContent = `今日已学 ${all.length - pending.length} / 共 ${all.length}`;
+    if (todo){
+      todo.innerHTML = pending.length
+        ? pending.map(x => `
+          <div class="item">
+            <span class="box" onclick="Courses.study('${x.id}')">▶</span>
+            <span class="grow" onclick="Courses.study('${x.id}')">${Util.esc(x.name)} <span class="tag">${Util.esc(x.cat)}</span></span>
+          </div>`).join('')
+        : '<div class="empty">🎉 今天的课都学完了，明天再来</div>';
     }
-  };
-})();
-/* ==== 功能：每日技巧 END ==== */
+    let list = all;
+    if (this._filter) list = list.filter(x => x.cat === this._filter);
+    document.getElementById('courseChips').innerHTML = ['', ...this.CATS].map(c =>
+      `<button class="chip ${this._filter===c?'on':''}" onclick="Courses.filter('${c}')">${c||'全部'}</button>`).join('');
+    document.getElementById('courseFilterHint').textContent = this._filter ? ('筛选：' + this._filter) : '';
+    body.innerHTML = list.map(x => `
+      <div class="mcard ${this.studiedToday(x)?'done':''}">
+        <div class="mcover" onclick="Courses.study('${x.id}')">
+          ${x.cover ? '<img src="'+x.cover+'" alt="">' : '<div class="mplaceholder">'+(x.hasVideo?'🎬':'📘')+'</div>'}
+          ${x.hasVideo ? '<span class="mplay">▶</span>' : ''}
+        </div>
+        <div class="mname" onclick="Courses.study('${x.id}')">${Util.esc(x.name)}</div>
+        <div class="mtags"><span class="tag">${Util.esc(x.cat)}</span>${this.studiedToday(x)?'<span class="tag">✓今日已学</span>':''}</div>
+        <div class="mops">
+          <a class="inline-link" onclick="Courses.importVideoFor('${x.id}')">📥 导入视频</a>
+          <a class="inline-link" onclick="Courses.edit('${x.id}')">✎</a>
+          <a class="inline-link" onclick="Courses.del('${x.id}')">🗑</a>
+        </div>
+      </div>`).join('');
+  },
+
+  async importVideo(){
+    const f = await pickFile('video/*');
+    if (!f) return;
+    const id = Util.uid();
+    const cover = await snapshotVideo(f);
+    await Blobs.put(id, f);
+    Store.upsert(this.KEY, { id, name: f.name.replace(/\.[^.]+$/, ''), cat:'其他', cover, hasVideo:true, studied:{} });
+    UI.toast('已导入课程视频：' + f.name);
+    this.render();
+  },
+
+  async importVideoFor(id){
+    const f = await pickFile('video/*');
+    if (!f) return;
+    const it = Store.list(this.KEY).find(x => x.id === id) || {};
+    const cover = await snapshotVideo(f);
+    await Blobs.put(id, f);
+    Store.upsert(this.KEY, { id, name: it.name || f.name.replace(/\.[^.]+$/, ''), cat: it.cat || '其他', cover, hasVideo:true, studied: it.studied || {} });
+    UI.toast('已关联视频');
+    this.render();
+  },
+
+  async study(id){
+    const it = Store.list(this.KEY).find(x => x.id === id);
+    if (!it) return;
+    const box = document.getElementById('playerContent');
+    if (it.hasVideo){
+      const blob = await Blobs.get(id);
+      if (!blob){ box.innerHTML = '<p class="hint">这台设备还没导入这个视频，去导入过它的设备看，或点「📥 导入视频」。</p>'; }
+      else {
+        const url = URL.createObjectURL(blob);
+        box.innerHTML = '<video src="'+url+'" controls autoplay style="width:100%;border-radius:14px;background:#000"></video>' +
+          (it.note ? '<p style="white-space:pre-wrap;margin-top:10px">'+Util.esc(it.note)+'</p>' : '');
+      }
+      openModal('playerModal');
+    } else if (it.note){
+      box.innerHTML = '<p style="white-space:pre-wrap">'+Util.esc(it.note)+'</p><p class="hint">还没导入视频，导入后这里直接播。</p>';
+      openModal('playerModal');
+    } else {
+      UI.toast('这门课还没有内容，先导入视频或写讲义');
+    }
+    const studied = Object.assign({}, it.studied || {});
+    studied[Util.today()] = true;
+    Store.upsert(this.KEY, { id, name: it.name, cat: it.cat, note: it.note, cover: it.cover, hasVideo: it.hasVideo, studied });
+    this.render();
+  },
+
+  edit(id){
+    const it = Store.list(this.KEY).find(x => x.id === id);
+    if (!it) return;
+    Media._ctx = { kind:'course', id };
+    document.getElementById('editTitle').textContent = '编辑课程';
+    document.getElementById('editName').value = it.name || '';
+    document.getElementById('editCat').value = it.cat || '其他';
+    document.getElementById('editNote').value = it.note || '';
+    openModal('editModal');
+  },
+
+  del(id){
+    if (!confirm('删掉这门课？')) return;
+    Store.softDelete(this.KEY, id);
+    Blobs.del(id);
+    this.render();
+  }
+};
+/* ==== 功能：课程 END ==== */
 
 
 /* ==== 功能：提醒 START ====
@@ -1354,7 +1526,6 @@ const Remind = (() => {
       const k = 'remind_done:' + key;
       const done = !Store.getDaily(k);
       Store.setDaily(k, done);
-      if (done) Store.incrDaily('recap_done', 1); else Store.decrDaily('recap_done');
       if (typeof Sync !== 'undefined' && Sync.on()) Sync.schedule();
       this.render();
     }
@@ -1364,7 +1535,7 @@ const Remind = (() => {
 
 
 /* ==== 功能：今日计划 START ====
-   每日重置：用「当天日期」做 key。勾选即打卡，计入周复盘。 */
+   每日重置：用「当天日期」做 key。勾选即打卡。 */
 const Plan = {
   KEY(){ return 'plan_items:' + Util.today(); },
   render(){
@@ -1392,7 +1563,6 @@ const Plan = {
     if (!it) return;
     const done = !it.done;
     Store.upsert(this.KEY(), { id, text: it.text, done });
-    if (done) Store.incrDaily('recap_done', 1); else Store.decrDaily('recap_done');
     if (typeof Sync !== 'undefined' && Sync.on()) Sync.schedule();
     this.render();
   },
@@ -1401,287 +1571,10 @@ const Plan = {
 /* ==== 功能：今日计划 END ==== */
 
 
-/* ==== 功能：平台数据 START ====
-   轻量手记：每个平台一条，含当日数字（粉丝/播放增量）+ 备注。
-   编辑即 upsert，跨设备合并安全。 */
-const Platform = {
-  KEY: 'platform',
-  render(){
-    const el = document.getElementById('platBody');
-    if (!el) return;
-    const items = Store.list(this.KEY);
-    if (!items.length){ el.innerHTML = '<div class="empty">还没有平台，加一个开始记</div>'; return; }
-    el.innerHTML = items.map(x => `
-      <div class="item" style="align-items:flex-start">
-        <div class="grow">
-          <div style="font-weight:500;margin-bottom:8px">${Util.esc(x.name)}</div>
-          <div class="row" style="margin-bottom:8px">
-            <input type="number" inputmode="numeric" placeholder="今日数据(增量)" value="${Util.esc(x.metric ?? '')}"
-              onchange="Platform.update('${x.id}',{metric:this.value})">
-            <span class="hint" style="margin:0;white-space:nowrap">粉丝/播放</span>
-          </div>
-          <input type="text" placeholder="今日待办 / 观察" value="${Util.esc(x.note ?? '')}"
-            onchange="Platform.update('${x.id}',{note:this.value})">
-        </div>
-        <button class="del" onclick="Platform.del('${x.id}')">✕</button>
-      </div>`).join('');
-  },
-  add(){
-    const el = document.getElementById('platInput');
-    const name = el.value.trim();
-    if (!name) return;
-    Store.upsert(this.KEY, { id: Util.uid(), name, metric:'', note:'' });
-    el.value = '';
-    this.render();
-  },
-  update(id, patch){
-    const it = Store.list(this.KEY).find(x => x.id === id);
-    if (!it) return;
-    Store.upsert(this.KEY, Object.assign({ id, name: it.name }, it, patch));
-    if (typeof Sync !== 'undefined' && Sync.on()) Sync.schedule();
-  },
-  del(id){ Store.softDelete(this.KEY, id); if (typeof Sync !== 'undefined' && Sync.on()) Sync.schedule(); this.render(); }
-};
-/* ==== 功能：平台数据 END ==== */
 
 
-/* ==== 功能：灵感云库 START ====
-   一条灵感 = 一个选题 + 它的视频文件名 + 脚本文档名 + 素材文件夹名。
-   原文件（几百 MB 的视频）不进云端，只同步名字；在电脑上点按钮直接打开。 */
-const Ideas = {
-  KEY: 'ideas',
-  _edit: null,
-
-  render(){
-    const el = document.getElementById('ideaBody');
-    const h  = document.getElementById('ideaCloudHint');
-    if (h) h.textContent = (typeof Sync !== 'undefined' && Sync.on())
-      ? '☁️ 已连云端 —— 存完自动上传，手机和电脑都能看'
-      : '☁️ 现在只存在这台设备。到 ⚙️ 设置里开「云同步」，手机也能读写';
-    if (!el) return;
-
-    const items = Store.list(this.KEY, (a,b) => (b._u||0)-(a._u||0));
-    if (!items.length){
-      el.innerHTML = '<div class="empty">还空着。刷到好点子就存一条，回头再补上视频和脚本名</div>';
-      return;
-    }
-
-    el.innerHTML = items.map(x => {
-      const tags = [];
-      if (x.video)  tags.push('<span class="tag">🎬 ' + Util.esc(x.video) + '</span>');
-      if (x.script) tags.push('<span class="tag">📝 ' + Util.esc(x.script) + '</span>');
-      if (x.folder) tags.push('<span class="tag">📂 ' + Util.esc(x.folder) + '</span>');
-
-      const ops = [];
-      ops.push('<a class="inline-link" onclick="Ideas.edit(\'' + x.id + '\')">✎ 编辑</a>');
-      if (!Local.isPhone()){
-        ops.push('<a class="inline-link" onclick="Ideas.openDir(\'' + x.id + '\')">📂 素材夹</a>');
-        if (x.video)  ops.push('<a class="inline-link" onclick="Ideas.openFile(\'' + x.id + '\',\'video\')">🎬 开视频</a>');
-        if (x.script) ops.push('<a class="inline-link" onclick="Ideas.openFile(\'' + x.id + '\',\'script\')">📝 开脚本</a>');
-      } else {
-        ops.push('<a class="inline-link" onclick="Ideas.copyName(\'' + x.id + '\')">📋 复制文件名</a>');
-      }
-
-      return `
-      <div class="item ${x.done?'done':''}">
-        <span class="box" onclick="Ideas.toggle('${x.id}')">${x.done?'✓':''}</span>
-        <span class="grow">
-          <div onclick="Ideas.toggle('${x.id}')">${Util.esc(x.text)}</div>
-          ${tags.length ? '<div class="idea-tags">' + tags.join('') + '</div>' : ''}
-          <div class="idea-ops">${ops.join('')}</div>
-        </span>
-        <button class="del" onclick="Ideas.del('${x.id}')">✕</button>
-      </div>`;
-    }).join('');
-  },
-
-  /* ── 关联文件表单 ── */
-  openForm(){
-    this._edit = null;
-    document.getElementById('ideaForm').style.display = 'block';
-    document.getElementById('ideaSaveBtn').textContent = '存';
-    document.getElementById('ideaInput').focus();
-  },
-  closeForm(){
-    this._edit = null;
-    ['ideaVideo','ideaScript','ideaFolder'].forEach(id => { document.getElementById(id).value = ''; });
-    document.getElementById('ideaForm').style.display = 'none';
-    document.getElementById('ideaSaveBtn').textContent = '存';
-  },
-  edit(id){
-    const it = Store.list(this.KEY).find(x => x.id === id);
-    if (!it) return;
-    this._edit = id;
-    document.getElementById('ideaInput').value  = it.text || '';
-    document.getElementById('ideaVideo').value  = it.video || '';
-    document.getElementById('ideaScript').value = it.script || '';
-    document.getElementById('ideaFolder').value = it.folder || '';
-    document.getElementById('ideaForm').style.display = 'block';
-    document.getElementById('ideaSaveBtn').textContent = '保存修改';
-    document.getElementById('ideaInput').focus();
-  },
-
-  add(){
-    const el = document.getElementById('ideaInput');
-    const text = el.value.trim();
-    if (!text) return UI.toast('先写个选题');
-
-    const patch = {
-      text,
-      video:  (document.getElementById('ideaVideo').value  || '').trim(),
-      script: (document.getElementById('ideaScript').value || '').trim(),
-      folder: (document.getElementById('ideaFolder').value || '').trim()
-    };
-
-    if (this._edit) {
-      const old = Store.list(this.KEY).find(x => x.id === this._edit) || {};
-      Store.upsert(this.KEY, Object.assign({ id: this._edit, done: old.done || false }, patch));
-      UI.toast('已保存');
-    } else {
-      Store.upsert(this.KEY, Object.assign({ id: Util.uid(), done: false }, patch));
-    }
-
-    el.value = '';
-    this.closeForm();
-    this.render();
-  },
-
-  toggle(id){
-    const it = Store.list(this.KEY).find(x => x.id === id);
-    if (!it) return;
-    Store.upsert(this.KEY, { id, text: it.text, done: !it.done });
-    this.render();
-  },
-
-  del(id){
-    const it = Store.list(this.KEY).find(x => x.id === id);
-    if (!confirm('删掉这条灵感？' + (it ? '（' + it.text + '）' : ''))) return;
-    Store.softDelete(this.KEY, id);
-    this.render();
-  },
-
-  /* ── 打开本机文件 ── */
-  _get(id){ return Store.list(this.KEY).find(x => x.id === id) || {}; },
-
-  openDir(id){
-    const p = Local.dirOf(this._get(id));
-    if (!p) return UI.toast('先到 ⚙️ 设置里填「本机素材目录」');
-    Local.open(p);
-  },
-  openFile(id, which){
-    const it = this._get(id);
-    const p = Local.fileOf(it, which);
-    if (!p) return UI.toast(which === 'script' ? '这条还没填脚本名' : '这条还没填视频名');
-    Local.open(p);
-  },
-  copyName(id){
-    const it = this._get(id);
-    const s = [it.video, it.script, it.folder].filter(Boolean).join('\n');
-    if (!s) return UI.toast('这条还没关联文件');
-    Local.copy(s);
-  }
-};
-/* ==== 功能：灵感云库 END ==== */
 
 
-/* ==== 功能：周复盘 START ====
-   默认功能。汇总本周打卡数量 + 连续记录天数。 */
-const Recap = {
-  collect(){
-    const days = [], today = new Date();
-    const dow = (today.getDay() + 6) % 7;               // 周一为一周之始
-    for (let i = 0; i < 7; i++){
-      const d = new Date(today); d.setDate(today.getDate() - dow + i);
-      days.push(Util.dateOf(d));
-    }
-    const done = days.reduce((s,d) => s + Store.count('recap_done:' + d), 0);
-    // 连续打卡天数：从今天往前数，断一天就停（今天还没打卡也算 0）
-    let streak = 0;
-    const t2 = new Date(today);
-    for (let i = 0; i < 400; i++){
-      const ds = Util.dateOf(t2);
-      if (Store.count('recap_done:' + ds) > 0) streak++;
-      else if (i > 0) break;
-      t2.setDate(t2.getDate() - 1);
-    }
-    return { days, done, streak, from: days[0], to: days[6] };
-  },
-
-  render(){
-    const r = this.collect();
-    const num = document.getElementById('recapNum');
-    const hint = document.getElementById('recapHint');
-    if (!num) return;
-    num.textContent = r.done;
-    hint.textContent = `${r.from} 到 ${r.to} · 连续打卡 ${r.streak} 天`;
-  },
-
-  async makeCard(){
-    const r = this.collect();
-    const cs = getComputedStyle(document.documentElement);
-    const v = n => cs.getPropertyValue(n).trim();
-    const W = 1080, H = 1350, cv = document.createElement('canvas');
-    cv.width = W; cv.height = H;
-    const g = cv.getContext('2d');
-    const font = (sz, w) => `${w||400} ${sz}px -apple-system,"PingFang SC",system-ui,sans-serif`;
-
-    g.fillStyle = v('--bg') || '#fff7ec'; g.fillRect(0,0,W,H);
-    g.fillStyle = v('--card') || '#fff';
-    const pad = 72, cw = W - pad*2;
-    if (g.roundRect){ g.beginPath(); g.roundRect(pad, 180, cw, 900, 40); g.fill(); }
-    else g.fillRect(pad, 180, cw, 900);
-
-    g.fillStyle = v('--accent') || '#ff7a00';
-    g.font = font(30, 500);
-    g.fillText('这一周', pad + 56, 300);
-
-    g.fillStyle = v('--text') || '#2b2440';
-    g.font = font(190, 500);
-    g.fillText(String(r.done), pad + 56, 480);
-    g.font = font(38);
-    g.fillStyle = v('--text-dim') || '#9b8fb0';
-    g.fillText('件事做完了', pad + 56 + g.measureText(String(r.done)).width + 210, 480);
-
-    g.font = font(34);
-    g.fillText(`${r.from}  —  ${r.to}`, pad + 56, 560);
-
-    const bw = 96, gap = 24, y = 660;
-    for (let i = 0; i < 7; i++){
-      const n = Store.count('recap_done:' + r.days[i]);
-      g.fillStyle = n ? (v('--accent') || '#ff7a00') : (v('--line') || '#ffe6c2');
-      g.globalAlpha = n ? Math.min(1, 0.35 + n * 0.18) : 1;
-      const x = pad + 56 + i * (bw + gap);
-      if (g.roundRect){ g.beginPath(); g.roundRect(x, y, bw, bw, 26); g.fill(); }
-      else g.fillRect(x, y, bw, bw);
-      g.globalAlpha = 1;
-      g.fillStyle = v('--text-dim') || '#9b8fb0';
-      g.font = font(28);
-      g.fillText('一二三四五六日'[i], x + bw/2 - 14, y + bw + 48);
-    }
-
-    g.fillStyle = v('--text') || '#2b2440';
-    g.font = font(46, 500);
-    g.fillText(`连续打卡 ${r.streak} 天`, pad + 56, 900);
-
-    g.fillStyle = v('--text-dim') || '#9b8fb0';
-    g.font = font(26);
-    g.fillText('抓梗的工作台', pad + 56, 1010);
-    g.font = font(22);
-    g.fillText('由 不一书个人工作台生成器 生成', pad + 56, 1046);
-
-    cv.toBlob(b => {
-      const url = URL.createObjectURL(b);
-      const a = document.createElement('a');
-      a.href = url; a.download = `这一周-${r.to}.png`;
-      a.click();
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        UI.toast('图卡已保存到下载目录');
-      }, 800);
-    }, 'image/png');
-  }
-};
-/* ==== 功能：周复盘 END ==== */
 
 
 App.init();
